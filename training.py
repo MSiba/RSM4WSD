@@ -75,6 +75,7 @@ def initialize(word, Ndim=2, min_value=-10, max_value=10):
         synsets["synsets"][i]["l"] = l[i]
         synsets["synsets"][i]["beta"] = betas[i][0]
         synsets["synsets"][i]["radius"] = r[i]
+        # I changed this to do outer join later on
         synsets["synsets"][i]["word"] = synsets["word"]["stem_word"]
 
     pp(synsets)
@@ -96,32 +97,5 @@ def initialize(word, Ndim=2, min_value=-10, max_value=10):
 
 
     return train_params, synsets
-initialize("bass")
+initialize("clothes")
 
-def get_children(synset):
-    """
-    returns a list of all children nodes of synset
-    :param synset: wordnet synset
-    :return:
-    """
-    # node = wn.synset(synset)
-    children = synset.hyponyms()
-
-    return children
-def DFS_train(root):
-
-    # get all hyponyms of root
-    children = []
-
-    # use depth-first search on each of the synsets for hyponyms also
-
-    # train the children w.r.t. their radii and position in space
-
-    # enlarge the radius of root s.t. the root sphere imports all the centers of all hyponyms
-
-
-
-    return # must return the new locations
-
-
-DFS_train("saltwater_fish.n.01")

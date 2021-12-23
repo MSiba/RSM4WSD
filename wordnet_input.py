@@ -21,6 +21,7 @@ def get_senses(word):
                 "hyponyms": synsets[i].hyponyms()
               }
         gloss_synsets.append(syn)
+        # I changed "name" to "stem_word"
     word_synsets = {"word": {"stem_word": word}, "synsets": gloss_synsets}
     return word_synsets
 
