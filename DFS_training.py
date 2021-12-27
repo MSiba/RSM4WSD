@@ -144,20 +144,20 @@ def adjust2contain(G, root_sphere, children):
         print("look here")
         distance_loss = helper_functions.L_P(child_sph, root_sphere)
         print("distance loss", distance_loss)
-        # while distance_loss != 0:
-        trans_vec, child_sph = helper_functions.guess_P_coo(child_sph, root_sphere, VAR=distance_loss)
-        children_spheres[ind] = child_sph
-        babies_child = get_all_children_of(G, child_sph)
-        if len(babies_child) > 0:
-            adjust2contain(G, child_sph, babies_child)
-        distance_loss = helper_functions.L_P(child_sph, root_sphere)
+        while distance_loss != 0:
+            trans_vec, child_sph = helper_functions.guess_P_coo(child_sph, root_sphere, VAR=distance_loss)
+            children_spheres[ind] = child_sph
+            babies_child = get_all_children_of(G, child_sph)
+            if len(babies_child) > 0:
+                adjust2contain(G, child_sph, babies_child)
+            distance_loss = helper_functions.L_P(child_sph, root_sphere)
 
 
     for child_sph in children_spheres:
         DATAFRAME.loc[DATAFRAME["synset"] == child_sph["synset"], ["center", "radius"]] = [[child_sph["center"]], child_sph["radius"]]
 
     return DATAFRAME #root_sphere, children_spheres
-bass_mom = adjust2contain(G, DATAFRAME.loc[6], get_all_children_of(G, "freshwater_bass.n.01"))
+# bass_mom = adjust2contain(G, DATAFRAME.loc[6], get_all_children_of(G, "freshwater_bass.n.01"))
 
 
 
@@ -180,7 +180,6 @@ def adjust2disconnect(G, root_sphere, children):
     U = np.zeros((nb_children, nb_children))
     VAR = 0.5
 
-    # TODO: I need to transform all children into spheres
     # sph_ch = []
 
 
@@ -201,9 +200,17 @@ def adjust2disconnect(G, root_sphere, children):
                     if len(children_child_i) == 0:
                         print("2")
                         # length = np.linalg.norm(child_i["center"] - child_j["center"]) - child_j["radius"] - VAR
-                        child_i = helper_functions.rotate(child_i, root_center, np.pi) #TODO: need to make dynamic
-                        # child_i = helper_functions.translate(child_i, )
-                        # child_i = helper_functions.reduce(child_i, loss)# + VAR)
+
+                        # for index, angle in enumerate(np.linspace(0, 7 * np.pi / 4, 1)):
+                        #     child_i = helper_functions.rotate(child_i, root_center, angle) #TODO: need to make dynamic
+                        #     # child_i = helper_functions.translate(child_i, VAR)
+                        #     # child_i = helper_functions.reduce(child_i, loss)# + VAR)
+                        #     loss = helper_functions.L_D(child_i, child_j)
+                        #     if loss == 0:
+                        #         children_spheres[i] = child_i
+                        #     else:
+                        #         angle+=10
+                        trans, child_i = helper_functions.guess_D_coo(child_i, child_j, mother_sphere=root_sphere)
                         children_spheres[i] = child_i
                         loss = helper_functions.L_D(child_i, child_j)
                     else:
@@ -212,24 +219,26 @@ def adjust2disconnect(G, root_sphere, children):
                         if len(children_child_j) == 0:
                             print("4")
 
-                            # length = np.linalg.norm(child_i["center"] - child_j["center"]) - child_i["radius"] - VAR
-                            child_j = helper_functions.rotate(child_j, root_center, np.pi)  # TODO: need to make dynamic
-                            # child_j = helper_functions.reduce(child_j, loss + VAR)
+                            # # length = np.linalg.norm(child_i["center"] - child_j["center"]) - child_i["radius"] - VAR
+                            # child_j = helper_functions.rotate(child_j, root_center, np.pi)  # TODO: need to make dynamic
+                            # # child_j = helper_functions.reduce(child_j, loss + VAR)
+                            trans, child_j = helper_functions.guess_D_coo(child_j, child_i, mother_sphere=root_sphere)
                             children_spheres[j] = child_j
                             loss = helper_functions.L_D(child_i, child_j)
 
                         else:
                             print("5")
 
-                            if len(children_child_i) < len(children_child_j):
+                            if len(children_child_i) <= len(children_child_j):
                                 print("6")
 
                                 print("guessing child i")
-                                trans_vec, child_i = helper_functions.guess_D_coo(child_i, child_j, VAR=loss)
+                                trans_vec, child_i = helper_functions.guess_D_coo(child_i, child_j, mother_sphere=root_sphere, VAR=loss)
                                 children_spheres[i] = child_i
 
                                 # to shift all children
                                 adjust2disconnect(G, root_sphere, children_child_i)
+                                # adjust2disconnect(G, root_sphere, children_child_j)
                                 # for ch in children_child_i:
                                 #
                                 #     sph_ch = create_sphere(ch)
@@ -243,10 +252,11 @@ def adjust2disconnect(G, root_sphere, children):
                                 print("7")
 
                                 print("guessing child j")
-                                trans_vec, child_j = helper_functions.guess_D_coo(child_j, child_i, VAR=loss)
+                                trans_vec, child_j = helper_functions.guess_D_coo(child_j, child_i, mother_sphere=root_sphere, VAR=loss)
                                 children_spheres[j] = child_j
                                 # shift all children
                                 adjust2disconnect(G, root_sphere, children_child_j)
+                                # adjust2disconnect(G, root_sphere, children_child_i)
                                 # for ch in children_child_j:
                                 #     sph_ch = create_sphere(ch)
                                 #     sph_ch = helper_functions.translate(sph_ch, trans_vec)
@@ -254,7 +264,7 @@ def adjust2disconnect(G, root_sphere, children):
                                 #         DATAFRAME["synset"] == sph_ch["synset"], ["center", "radius"]] = [[sph_ch["center"]], sph_ch["radius"]]
                                 loss = helper_functions.L_D(child_i, child_j)
 
-                    U[i][j] = sphere_dist(child_i, child_j)
+                    # U[i][j] = sphere_dist(child_i, child_j)
                     print("8")
 
             # children_spheres[i] = child_i
@@ -336,26 +346,27 @@ def training_one_family(G, root):
             print("children after adjustment")
             print(children_spheres)
         # root_sphere = create_parent_sphere(root_sphere, children)
-        root_sphere = adjust2contain(G, root_sphere, children)#[0]
+        part_of_spheres = adjust2contain(G, root_sphere, children)#[0]
+        # root_sphere = DATAFRAME[DATAFRAME["synset"]==root].to_dict(orient="records")[0]
         print("root sphere", root_sphere)
-    else:
+    # else:
         # root = create_sphere(root)
-        root_sphere = root_sphere
-    DATAFRAME.loc[DATAFRAME["synset"] == root_sphere["synset"], ["center", "radius"]] = [[root_sphere["center"]], root_sphere["radius"]]
+        # root_sphere = root_sphere
+    # DATAFRAME.loc[DATAFRAME["synset"] == root_sphere["synset"], ["center", "radius"]] = [[root_sphere["center"]], root_sphere["radius"]]
 
     print("Output")
     return DATAFRAME # TODO: return children spheres
 
 # small_fam = training_one_family(G, "freshwater_bass.n.01")
-# result = training_one_family(G, wurzel)
+result = training_one_family(G, wurzel)
 # print(result)
 
 def contain_then_disconnect(G, root_sphere, children):
     adjust2contain(G, root_sphere, children)
     adjust2disconnect(G, root_sphere, children)
     return DATAFRAME
-cd = contain_then_disconnect(G, DATAFRAME.loc[6], get_all_children_of(G, "freshwater_bass.n.01"))
-result = contain_then_disconnect(G, DATAFRAME.loc[0], get_all_children_of(G,wurzel) )
+# cd = contain_then_disconnect(G, DATAFRAME.loc[6], get_all_children_of(G, "freshwater_bass.n.01"))
+# result = contain_then_disconnect(G, DATAFRAME.loc[0], get_all_children_of(G,wurzel) )
 #%%
 
 def draw_circle(sphere):
