@@ -100,7 +100,7 @@ def guess_D_coo(sphere, neighbour_sphere, mother_sphere, VAR=0.5, conf=0.2):
         s.add(x1 < o1 - r0 + conf) #x2 - r2 + conf)
         s.add(y1 > o2 + r0 -conf) #y2 + r2 - conf)
         s.add(y1 < o2 - r0 + conf) # y2 - r2 + conf)
-        s.add((x1-x2)**2 + (y1-y2)**2 == (r1 + r2 + VAR)**2)
+        s.add((x1-x2)**2 + (y1-y2)**2 > (r1 + r2 + VAR)**2)
 
 
         if s.check()== sat:

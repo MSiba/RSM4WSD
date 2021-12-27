@@ -58,11 +58,11 @@ for node in G.nodes():
     except AttributeError:
         continue
 
-
+#%%
 print(edges)
 print(len(edges))  # 308202 edges
 
-
+#%%
 # To garantee edge order, we need to
 
 G.add_edges_from(edges)
@@ -128,15 +128,15 @@ def adjust2contain(G, root_sphere, children):
     children_spheres = subset_dataframe.to_dict(orient='records')
 
     sum_radii = subset_dataframe["radius"].sum()  # TODO: delete /2
-    print("sum_radii = {}".format(sum_radii))
-    # avg_centers = subset_dataframe["center"].mean()
-    # assert (avg_centers==np.NAN, "The mean center is NAN")
-    # avg_centers = np.array([np.round(avg_centers[0],1), np.round(avg_centers[1],1)])
+    # print("sum_radii = {}".format(sum_radii))
+    avg_centers = subset_dataframe["center"].mean()
+    # assert avg_centers==np.NAN, "The mean center is NAN"
+    avg_centers = np.array([np.round(avg_centers[0],1), np.round(avg_centers[1],1)])
     # print("Average_center", avg_centers, type(avg_centers))
 
     #enlarge the root sphere such that its radius could contain all spheres
     root_sphere = helper_functions.enlarge(root_sphere, sum_radii)
-    # root_sphere["center"] = avg_centers
+    root_sphere["center"] = avg_centers
     DATAFRAME.loc[DATAFRAME["synset"] == root_sphere["synset"], ["center", "radius"]] = [[root_sphere["center"]],
                                                                                        root_sphere["radius"]]
 
@@ -210,7 +210,7 @@ def adjust2disconnect(G, root_sphere, children):
                         #         children_spheres[i] = child_i
                         #     else:
                         #         angle+=10
-                        trans, child_i = helper_functions.guess_D_coo(child_i, child_j, mother_sphere=root_sphere)
+                        trans, child_i = helper_functions.guess_D_coo(child_i, child_j, mother_sphere=root_sphere, VAR=loss)
                         children_spheres[i] = child_i
                         loss = helper_functions.L_D(child_i, child_j)
                     else:
@@ -222,7 +222,7 @@ def adjust2disconnect(G, root_sphere, children):
                             # # length = np.linalg.norm(child_i["center"] - child_j["center"]) - child_i["radius"] - VAR
                             # child_j = helper_functions.rotate(child_j, root_center, np.pi)  # TODO: need to make dynamic
                             # # child_j = helper_functions.reduce(child_j, loss + VAR)
-                            trans, child_j = helper_functions.guess_D_coo(child_j, child_i, mother_sphere=root_sphere)
+                            trans, child_j = helper_functions.guess_D_coo(child_j, child_i, mother_sphere=root_sphere, VAR=loss)
                             children_spheres[j] = child_j
                             loss = helper_functions.L_D(child_i, child_j)
 
@@ -282,7 +282,7 @@ def adjust2disconnect(G, root_sphere, children):
                 # else:
                 #     continue
 
-    return children_spheres # TODO: keep it the list of dict?
+    return DATAFRAME # TODO: keep it the list of dict?
 
 
     #     print(U)
@@ -327,31 +327,49 @@ def create_parent_sphere(sphere, children, EXT=1.0):
 
     return sphere
 
+def test_P(G, root_sphere):
+
+    children = get_all_children_of(G, root_sphere["synset"])
+
+    subset_dataframe = DATAFRAME[DATAFRAME["synset"].isin(children)]
+    children_spheres = subset_dataframe.to_dict(orient='records')
+
+    loss = np.zeros((len(children)))
+
+    if len(children) > 0:
+        for i, child_sphere in enumerate(children_spheres):
+            loss[i] = helper_functions.L_P(child_sphere, root_sphere)
+            if loss[i] != 0:
+                print("<{}> is not part of <{}> with loss = {}".format(child_sphere["synset"], root_sphere["synset"], loss[i]))
+            else:
+                print("<{}> is part of <{}>".format(child_sphere["synset"], root_sphere["synset"]))
+    return loss #zip(children_spheres, loss)
+
+
 
 def training_one_family(G, root):
     children = get_all_children_of(G, root)
     root_sphere = DATAFRAME[DATAFRAME["synset"]==root].to_dict(orient="records")[0]
-    # children_spheres = [create_sphere(child) for child in children]
 
     if len(children) > 0:
-        # adjust2contain(G, root_sphere, children)
         for child in children:
             training_one_family(G, child)
             print("Training One Fam of child {}".format(child))
             print(training_one_family(G, child))
         if len(children) > 1:
-            children_spheres = adjust2disconnect(G, root_sphere, children)
-            # adjust2disconnect(G, children)
-            # children_spheres.append(cs)
-            print("children after adjustment")
-            print(children_spheres)
+            # children_spheres = adjust2disconnect(G, root_sphere, children)
+            adjust2disconnect(G, root_sphere, children)
+            # # children_spheres.append(cs)
+            # print("children after adjustment")
+            # print(children_spheres)
         # root_sphere = create_parent_sphere(root_sphere, children)
-        part_of_spheres = adjust2contain(G, root_sphere, children)#[0]
-        # root_sphere = DATAFRAME[DATAFRAME["synset"]==root].to_dict(orient="records")[0]
+        adjust2contain(G, root_sphere, children)#[0]
+        print("Test PO: ", test_P(G, root_sphere))
+        root_sphere = DATAFRAME[DATAFRAME["synset"]==root].to_dict(orient="records")[0]
         print("root sphere", root_sphere)
-    # else:
+    else:
         # root = create_sphere(root)
-        # root_sphere = root_sphere
+        root_sphere = root_sphere
     # DATAFRAME.loc[DATAFRAME["synset"] == root_sphere["synset"], ["center", "radius"]] = [[root_sphere["center"]], root_sphere["radius"]]
 
     print("Output")
@@ -421,6 +439,11 @@ def visualize(df):
 visualize(result)
 # visualize(bass_mom)
 # visualize(cd)
+
+
+
+
+
 
 def get_children(synset):
     """
