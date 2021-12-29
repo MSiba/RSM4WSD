@@ -28,7 +28,7 @@ def translate(sphere, vec): #acts as prolongement
 def rotate(sphere, center, alpha): # I think I'll mostly use this as the origin (0,0) but for now keep it as it is
 
     point = sphere["center"]
-    print("Point: {}, Center: {}".format(point, center))
+    # print("Point: {}, Center: {}".format(point, center))
     # rotate the vector about (center-point) by alpha
     rotation_matrix = [[np.cos(alpha), -np.sin(alpha)],
                        [np.sin(alpha), np.cos(alpha)]]
@@ -55,16 +55,16 @@ def L_D(sphere1, sphere2):
     r2 = sphere2["radius"]
 
     dist_loss = r1 + r2 - np.linalg.norm(c1 - c2)
-    if dist_loss > 0:
-        print("The overlaping distance between <{}> and <{}> is: {}.".format(sphere1["synset"],
-                                                                                                  sphere2["synset"],
-                                                                                                  dist_loss))
+    if dist_loss >= 0:
+        # print("The overlaping distance between <{}> and <{}> is: {}.".format(sphere1["synset"],
+        #                                                                                           sphere2["synset"],
+        #                                                                                           dist_loss))
         return dist_loss
     else:
-        print("<{}> is disconnected from <{}>.".format(sphere1["synset"], sphere2["synset"]))
+        # print("<{}> is disconnected from <{}>.".format(sphere1["synset"], sphere2["synset"]))
         return 0
 
-def guess_D_coo(sphere, neighbour_sphere, mother_sphere, VAR=0.5, conf=0.2):
+def guess_D_coo(sphere, neighbour_sphere, mother_sphere, VAR=0.1, conf=0.2):
     """
     guess the coordinates of the new center of the sphere, such that the two spheres are disconnected by some distance.
     :param sphere: the moving sphere, with center and radius
@@ -90,92 +90,97 @@ def guess_D_coo(sphere, neighbour_sphere, mother_sphere, VAR=0.5, conf=0.2):
 
     loss = L_D(sphere, neighbour_sphere)
     vec = []
-
+    conf = r1
     while loss != 0:
         x1 = Real('x1')
         y1 = Real('y1')
 
         s = Solver()
-        s.add(x1 > o1 + r0 -conf) #x2 + r2 - conf)
-        s.add(x1 < o1 - r0 + conf) #x2 - r2 + conf)
-        s.add(y1 > o2 + r0 -conf) #y2 + r2 - conf)
-        s.add(y1 < o2 - r0 + conf) # y2 - r2 + conf)
-        s.add((x1-x2)**2 + (y1-y2)**2 > (r1 + r2 + VAR)**2)
+        s.add(x1 <= o1 + r0 - conf) #x2 + r2 - conf)
+        s.add(x1 >= o1 - r0 + conf) #x2 - r2 + conf)
+        s.add(y1 <= o2 + r0 - conf) #y2 + r2 - conf)
+        s.add(y1 >= o2 - r0 + conf) # y2 - r2 + conf)
+        s.add((x1-x2)**2 + (y1-y2)**2 >= (r1 + r2+VAR)**2)
 
 
-        if s.check()== sat:
-            if s.check() == sat:
-                m = s.model()
-                # print(m)
+        if s.check() == sat:
+            m = s.model()
+            # print(m)
 
-                # to store the new center coordinates
-                coo = np.zeros((1, 2))
-                for d in m.decls():
+            # to store the new center coordinates
+            coo = np.zeros((1, 2))
+            for d in m.decls():
 
-                    if d.name() == "x1":
-                        print("look here x1")
-                        print(type(m[d]))
-                        print(m[d])
-                        print(is_real(m[d]))
-                        print(is_rational_value(m[d]))
-                        print(is_algebraic_value(m[d]))
+                if d.name() == "x1":
+                    print("look here x1")
+                    print(type(m[d]))
+                    print(m[d])
+                    print(is_real(m[d]))
+                    print(is_rational_value(m[d]))
+                    print(is_algebraic_value(m[d]))
 
-                        if (not is_algebraic_value(m[d]) and not is_rational_value(m[d])):
-                            coo[0][0] = m[d].as_long()
+                    if not is_algebraic_value(m[d]) and not is_rational_value(m[d]):
+                        coo[0][0] = m[d].as_long()
+                    else:
+                        if is_rational_value(m[d]):
+                            num = m[d].numerator_as_long()
+                            denom = m[d].denominator_as_long()
+                            irr_nb = float(num) / float(denom)
+                            coo[0][0] = round(irr_nb, 1)
                         else:
-                            if is_rational_value(m[d]):
-                                num = m[d].numerator_as_long()
-                                denom = m[d].denominator_as_long()
+                            if is_algebraic_value(m[d]):
+                                i = m[d].approx(20)
+                                num = i.numerator_as_long()
+                                denom = i.denominator_as_long()
                                 irr_nb = float(num) / float(denom)
                                 coo[0][0] = round(irr_nb, 1)
                             else:
-                                if is_algebraic_value(m[d]):
-                                    i = m[d].approx(20)
-                                    num = i.numerator_as_long()
-                                    denom = i.denominator_as_long()
-                                    irr_nb = float(num) / float(denom)
-                                    coo[0][0] = round(irr_nb, 1)
+                                print("Could not find {} for Disconnection".format(d.name()))
 
 
+                else:
+                    print("look here y1 = {}".format(m[d]))
+                    print(is_real(m[d]))
+                    print(is_rational_value(m[d]))
+                    print(is_algebraic_value(m[d]))
+
+                    if not is_algebraic_value(m[d]) and not is_rational_value(m[d]):
+                        coo[0][1] = m[d].as_long()
                     else:
-                        print("look here y1 = {}".format(m[d]))
-                        print(is_real(m[d]))
-                        print(is_rational_value(m[d]))
-                        print(is_algebraic_value(m[d]))
-
-                        if not is_algebraic_value(m[d]) and not is_rational_value(m[d]):
-                            coo[0][1] = m[d].as_long()
+                        if is_rational_value(m[d]):
+                            num = m[d].numerator_as_long()
+                            denom = m[d].denominator_as_long()
+                            irr_nb = float(num) / float(denom)
+                            coo[0][1] = round(irr_nb, 1)
                         else:
-                            if is_rational_value(m[d]):
-                                num = m[d].numerator_as_long()
-                                denom = m[d].denominator_as_long()
+                            if is_algebraic_value(m[d]):
+                                i = m[d].approx(20)
+                                num = i.numerator_as_long()
+                                denom = i.denominator_as_long()
                                 irr_nb = float(num) / float(denom)
                                 coo[0][1] = round(irr_nb, 1)
                             else:
-                                if is_algebraic_value(m[d]):
-                                    i = m[d].approx(20)
-                                    num = i.numerator_as_long()
-                                    denom = i.denominator_as_long()
-                                    irr_nb = float(num) / float(denom)
-                                    coo[0][1] = round(irr_nb, 1)
+                                print("Could not find {} for Disconnection".format(d.name()))
 
-                # print("{} = {}".format(d.name(), m[d]))
-                vec = c1 - coo[0]
-                sphere["center"] = coo[0]
-                loss = L_D(sphere, neighbour_sphere)
-                # return vec, sphere
-                break
+            # print("{} = {}".format(d.name(), m[d]))
+            vec = c1 - coo[0]
+            sphere["center"] = coo[0]
+            loss = L_D(sphere, neighbour_sphere)
+            # return vec, sphere
+            break
         else:
-            print("z3 checker for confidence = {} failed ...".format(conf))
+            # print("z3 checker for confidence = {} failed ...".format(conf))
             try:
                 # conf = random.randrange(-2 * np.abs(conf), 2 * np.abs(conf), 1)
-                # VAR += random.uniform(0, 1, 1)
-                conf += random.uniform(0,1,1)
-                print("Rechecking for confidence = {}.".format(conf))
+                # VAR += np.round(random.uniform(0, 1),1)
+                conf +=  np.round(random.uniform(0, 1),1)
+                # print("Rechecking for confidence = {}.".format(conf))
             except:
-                # VAR += 1
-                conf += 1
-            guess_P_coo(sphere, neighbour_sphere, conf=conf)
+                # VAR += 0.1
+                conf += 0.1
+            guess_D_coo(sphere, neighbour_sphere, mother_sphere, conf=conf)
+            # guess_D_coo(sphere, neighbour_sphere, mother_sphere, VAR=VAR)
+
     return vec, sphere
 
 
@@ -215,7 +220,7 @@ def L_P(sphere1, sphere2):
         print("<{}> is part of <{}>.".format(sphere1["synset"], sphere2["synset"]))
         return 0
 
-def guess_P_coo(sphere, mother_sphere, VAR=0.5, conf=3.0):
+def guess_P_coo(sphere, mother_sphere, VAR=0.1, conf=0.1):
     """
     guess the coordinates of the new center of the child sphere, such that the sphere is contained in the other sphere
     https://stackoverflow.com/questions/12598408/z3-python-getting-python-values-from-model
@@ -237,9 +242,14 @@ def guess_P_coo(sphere, mother_sphere, VAR=0.5, conf=3.0):
 
     vec = [0, 0]
 
-    print("Loss calculated in guess_P_coo")
+    # print("Loss calculated in guess_P_coo")
     loss = L_P(sphere, mother_sphere)
-    print(loss)
+    # print(loss)
+
+    print("guess PART OF ***************************")
+
+    # VAR = r1
+    conf = r1
 
     while loss != 0:
 
@@ -247,13 +257,13 @@ def guess_P_coo(sphere, mother_sphere, VAR=0.5, conf=3.0):
         y1 = Real('y1')
 
         s = Solver()
-        s.add(x1 > x2 + r2 - VAR)
-        s.add(x1 < x2 - r2 + VAR)
-        s.add(y1 > y2 + r2 - VAR)
-        s.add(y1 < y2 - r2 + VAR)
+        s.add(x1 <= x2 + r2 - conf)
+        s.add(x1 >= x2 - r2 + conf)
+        s.add(y1 <= y2 + r2 - conf)
+        s.add(y1 >= y2 - r2 + conf)
         s.add((x1-x2)**2 + (y1-y2)**2 <= (r2 - r1)**2)
 
-        print("SAT? {}".format(s.check()))
+        # print("SAT? {}".format(s.check()))
         if s.check()== sat:
             m = s.model()
             # print(m)
@@ -317,17 +327,17 @@ def guess_P_coo(sphere, mother_sphere, VAR=0.5, conf=3.0):
             sphere["center"] = coo[0]
             loss = L_P(sphere, mother_sphere)
             print("coo[0] =", coo[0])
-            print("Non-iterable?", vec, sphere)
-            return vec, sphere
+            # print("Non-iterable?", vec, sphere)
+            # return vec, sphere
             break
         else:
-            print("z3 checker for confidence = {} failed ...".format(conf))
+            print("z3 checker for variance = {} failed ...".format(VAR))
             try:
                 # conf = random.randrange(-2 * np.abs(conf), 2 * np.abs(conf), 1)
-                VAR += random.uniform(0, 1, 1)
-                print("Rechecking for confidence = {}.".format(conf))
+                VAR += np.round(random.uniform(0, 1),1)
+                # print("Rechecking for variance = {}.".format(VAR))
             except:
-                VAR += 1
+                VAR += 0.1
             guess_P_coo(sphere, mother_sphere, VAR=VAR)
 
         # loss = L_P(sphere, mother_sphere)
