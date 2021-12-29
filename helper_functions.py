@@ -4,6 +4,24 @@ from nltk.corpus import wordnet as wn
 from z3 import *
 import random
 
+"""
+The current status of this script:
+1. I am using mostly L_D, L_P, guess_D_coo and guess_P_coo
+2. The functions are all correct, however, I am using recursive calls within them, which is not pythonic
+3. This is causing problems sometimes (not for all runs) 
+4. The guess_D_coo function or adjust2disconnect does not always yield the correct coordinates, e.g. 
+    two sibilings may overlap when their mother sphere is adjusted and never disconnected further
+5. The children spheres sometimes do not move due to their static programming 
+    --> they do not have enough space to move according to our objective functions in z3 checker
+TODO: 
+i. look for alternatives to z3 and the recursion
+ii. maybe applying the geometric functions as I wanted initially
+iii. after I created the mother sphere for a big tree, I must move it sufficiently in space!!
+iv. find an efficient solution for running such an algorithm on all the nodes of the graph
+v. In this version of my code, I only considered nodes related to each other using hypernym and hyponyms relations,
+I need to consider lonely nodes of WN.
+"""
+
 
 def RELATION(word1, word2):
     synsets1 = wn.synsets(word1)
@@ -100,7 +118,7 @@ def guess_D_coo(sphere, neighbour_sphere, mother_sphere, VAR=0.1, conf=0.2):
         s.add(x1 >= o1 - r0 + conf) #x2 - r2 + conf)
         s.add(y1 <= o2 + r0 - conf) #y2 + r2 - conf)
         s.add(y1 >= o2 - r0 + conf) # y2 - r2 + conf)
-        s.add((x1-x2)**2 + (y1-y2)**2 >= (r1 + r2+VAR)**2)
+        s.add((x1-x2)**2 + (y1-y2)**2 >= (r1 + r2+ VAR)**2)
 
 
         if s.check() == sat:
@@ -169,17 +187,23 @@ def guess_D_coo(sphere, neighbour_sphere, mother_sphere, VAR=0.1, conf=0.2):
             # return vec, sphere
             break
         else:
-            # print("z3 checker for confidence = {} failed ...".format(conf))
-            try:
-                # conf = random.randrange(-2 * np.abs(conf), 2 * np.abs(conf), 1)
-                # VAR += np.round(random.uniform(0, 1),1)
-                conf +=  np.round(random.uniform(0, 1),1)
-                # print("Rechecking for confidence = {}.".format(conf))
-            except:
-                # VAR += 0.1
-                conf += 0.1
-            guess_D_coo(sphere, neighbour_sphere, mother_sphere, conf=conf)
-            # guess_D_coo(sphere, neighbour_sphere, mother_sphere, VAR=VAR)
+            # # print("z3 checker for confidence = {} failed ...".format(conf))
+            # try:
+            #     # conf = random.randrange(-2 * np.abs(conf), 2 * np.abs(conf), 1)
+            #     VAR += np.round(random.uniform(0, 1),1)
+            #     # conf +=  np.round(random.uniform(0, 1),1)
+            #     print("Rechecking for variance = {}.".format(VAR))
+            # except:
+            #     VAR += 0.1
+            #     # conf += 0.1
+            # # guess_D_coo(sphere, neighbour_sphere, mother_sphere, conf=conf)
+            VAR +=0.1
+            if VAR <= 2*r0:
+                print("Rechecking for variance = {}.".format(VAR))
+                guess_D_coo(sphere, neighbour_sphere, mother_sphere, VAR=VAR)
+            else:
+                print("There is no possibility for disconnection")
+                break
 
     return vec, sphere
 

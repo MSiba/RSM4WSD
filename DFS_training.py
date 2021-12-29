@@ -14,6 +14,13 @@ import matplotlib.pyplot as plt
 from array import array
 import matplotlib
 
+"""
+In this script, I call the initial functions: adjust2contain and adjust2disconnect and the train one family algorithm
+Known issues:
+- the algorithms are correct, however I am using recursive calls which is not very pythonic
+- especially when calling guess_D_coo from adjust2disconnect --> stackoverflow because no coordinates could be found! 
+"""
+
 # Experimenting on 1 synset only
 wurzel = "freshwater_fish.n.01"
 
@@ -127,7 +134,7 @@ def adjust2contain(G, root_sphere, children):
     subset_dataframe = DATAFRAME[DATAFRAME["synset"].isin(children)]  # [create_sphere(child) for child in children]
     children_spheres = subset_dataframe.to_dict(orient='records')
 
-    sum_radii = 2 * subset_dataframe["radius"].sum()  # TODO: delete /2
+    sum_radii = subset_dataframe["radius"].sum()  # TODO: delete /2
     # print("sum_radii = {}".format(sum_radii))
     avg_centers = subset_dataframe["center"].mean()
     # assert avg_centers==np.NAN, "The mean center is NAN"
@@ -340,6 +347,62 @@ def create_parent_sphere(sphere, children, EXT=1.0):
     DATAFRAME.loc[DATAFRAME["synset"] == sphere["synset"], ["center", "radius"]] = [[sphere["center"]], sphere["radius"]]
 
     return sphere
+
+def adjust4disconnect(G, root_sphere, children):
+    """
+
+    :param G:
+    :param children:
+    :return: returns all children of one family, such that they are disconnected from each other
+    """
+    root_center = root_sphere["center"]
+
+    # print("Adjust 2 disconnect")
+    # print("children", children)
+    nb_children = len(children)
+    subset_dataframe = DATAFRAME[DATAFRAME["synset"].isin(children)] #[create_sphere(child) for child in children]
+    children_spheres = subset_dataframe.to_dict(orient='records')
+    # upper triangular matrix
+    # np.triu(matrix, 1)
+    U = np.zeros((nb_children, nb_children))
+    VAR = 0.5
+
+    # sph_ch = []
+
+
+    for i, child_i in enumerate(children_spheres):
+        for j, child_j in enumerate(children_spheres):
+            # print(j, child_j)
+            if child_i["synset"] != child_j["synset"] and i < j:
+                print("Disconnection <{}> and <{}>".format(child_i["synset"], child_j["synset"]))
+
+                loss = helper_functions.L_D(child_i, child_j)
+
+                while loss != 0:
+
+
+                    # children_child_i = get_all_children_of(G, child_i["synset"])
+                    # children_child_j = get_all_children_of(G, child_j["synset"])
+                    # find distance they need to move from each other
+
+                    trans, child_i = helper_functions.guess_D_coo(child_i, child_j, mother_sphere=root_sphere)#, VAR=loss)
+                    children_spheres[i] = child_i
+                    # adjust4disconnect(G, child_i, children_child_i)
+                    # adjust4disconnect(G, child_j, children_child_j)
+                    loss = helper_functions.L_D(child_i, child_j)
+
+
+                # adjust4disconnect(G, child_i, children_child_i)
+                # adjust4disconnect(G, child_j, children_child_j)
+                # U[i][j] = sphere_dist(child_i, child_j)
+                print("8")
+
+    for child_sph in children_spheres:
+        DATAFRAME.loc[DATAFRAME["synset"] == child_sph["synset"], ["center", "radius"]] = [[child_sph["center"]], child_sph["radius"]]
+
+    return DATAFRAME  # TODO: keep it the list of dict?
+
+
 
 def test_P(G, root_sphere):
 
