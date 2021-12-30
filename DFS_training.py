@@ -330,8 +330,11 @@ def adjust2disconnect(G, root_sphere, children):
 def create_parent_sphere(sphere, children, EXT=1.0):
     """
     creates the minimum sphere enclosing all children spheres
+    https://stackoverflow.com/questions/9063453/how-to-compute-the-smallest-bounding-sphere-enclosing-other-bounding-spheres
     https://people.inf.ethz.ch/emo/DoctThesisFiles/fischer05.pdf
     https://doc.cgal.org/latest/Bounding_volumes/classCGAL_1_1Min__sphere__of__spheres__d.html
+    https://stackoverflow.com/questions/3102547/how-can-i-find-the-minimal-circle-include-some-given-points
+
 
     :param sphere:
     :param children:
