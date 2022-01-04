@@ -21,9 +21,13 @@ semcor_df = pd.DataFrame(data={'sentence':semcor_sentences, 'sense_tags': semcor
 #%%
 sent = semcor_tags[0]
 print(sent)
+words = []
+POS = []
 senses = []
 for l in sent:
     if isinstance(l, nltk.tree.Tree):
+        words.append(l.leaves())
+        POS.append(l.pos())
         senses.append(l.label())
     else:
         None

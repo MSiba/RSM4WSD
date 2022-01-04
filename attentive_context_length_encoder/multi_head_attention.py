@@ -30,6 +30,25 @@ I will begin with the simplest architecture:
 - FFNN vs. Fully Connected Linear Layer
 - align and normalize
 - softmax and finally output
+
+
+https://towardsdatascience.com/augmenting-neural-networks-with-constraints-optimization-ac747408432f
+label: [POS, l0, alpha, li, beta_i, radius]
+if POS == n/v/a/d:
+    [POS, ...] is known
+    if this word is in wordnet database:
+        [POS, l0, alpha,???] is known
+    else:
+        [POS, ???] is known
+else:
+    [tree_tagPOS, nothing] because it has only a POS tagging, e.g. The, in and other stop words
+    
+There are multiple ways how to embed these constraints within the optimization of the attention mechanism.
+Which method to choose? --> add a layer? FOL?
+
+
+Question: is there a way to predict the l_i, beta_i, and radius based on previously detected scores?
+https://towardsdatascience.com/what-is-teacher-forcing-3da6217fed1c 
 """
 
 """https://nlp.seas.harvard.edu/2018/04/03/attention.html"""
