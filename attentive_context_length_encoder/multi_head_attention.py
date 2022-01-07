@@ -33,6 +33,7 @@ I will begin with the simplest architecture:
 
 
 https://towardsdatascience.com/augmenting-neural-networks-with-constraints-optimization-ac747408432f
+https://en.wikipedia.org/wiki/Conditional_random_field#:~:text=Conditional%20random%20fields%20(CRFs)%20are,can%20take%20context%20into%20account.
 label: [POS, l0, alpha, li, beta_i, radius]
 if POS == n/v/a/d:
     [POS, ...] is known
@@ -49,6 +50,11 @@ Which method to choose? --> add a layer? FOL?
 
 Question: is there a way to predict the l_i, beta_i, and radius based on previously detected scores?
 https://towardsdatascience.com/what-is-teacher-forcing-3da6217fed1c 
+https://machinelearningmastery.com/teacher-forcing-for-recurrent-neural-networks/
+https://machinelearningmastery.com/deep-learning-models-for-multi-output-regression/
+- multi-output regression is what my labels look like
+- I need to teacher force the POS or/and the l0, alpha
+- 
 """
 
 """https://nlp.seas.harvard.edu/2018/04/03/attention.html"""
