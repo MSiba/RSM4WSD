@@ -13,11 +13,21 @@ semcor_sentences = semcor.sents()
 # get the tagged senses for each sentence
 # tag is set to "both" to get POS + semantic tagging
 semcor_tags = semcor.tagged_sents(tag='both')
+semcor_senses = semcor.tagged_sents(tag='sem')
+semcor_pos = semcor.tagged_sents(tag='pos')
 
 # TODO: add later
 semcor_spacial_tags = None
 #%%
-semcor_df = pd.DataFrame(data={'sentence':semcor_sentences, 'sense_tags': semcor_tags})
+# import preprocessing_utils as pu
+#
+# sents, tags = pu.semcor_preprocessing(semcor_sentences, semcor_tags)
+#
+# #%%
+# print(len(sents[0]), len(tags[0]))
+# print(sents[0], "\n", tags[0])
+#%%
+semcor_df = pd.DataFrame(data={'sentence': semcor_sentences, 'sense_tags': semcor_tags})
 
 #%%
 sent = semcor_tags[0]
@@ -27,6 +37,7 @@ POS = []
 senses = []
 for l in sent:
     if isinstance(l, nltk.tree.Tree):
+        print(l.leaves())
         words.append(l.leaves())
         POS.append(l.pos())
         if not isinstance(l.label(), str):
@@ -37,7 +48,7 @@ for l in sent:
         words.append(None)
         POS.append(None)
         # senses.append(None)
-
+#%%
 def distorte_tags(semcor_tag, NER=False):
     words = []
     POS = []
@@ -95,9 +106,18 @@ len(additional_col)
 postprocess_df = pd.DataFrame(additional_col)
 SEMCOR_DATAFRAME = pd.concat([semcor_df, postprocess_df], axis=1)
 #%%
-# to pickle
-SEMCOR_DATAFRAME.to_pickle("./data/semcor_dataframe.pickle")
+# do some statistics on semcor dataframe, e.g. missing fields?
+print(SEMCOR_DATAFRAME.isnull().values.any())
 
+#%%
+# to pickle
+# SEMCOR_DATAFRAME.to_pickle("./data/semcor_dataframe.pickle")
+# pickle does not work correctly and feather because the values are all lists
+SEMCOR_DATAFRAME.to_json("./data/semcor_dataframe.json")
+
+#%%
+# check if I can read semcor from pickle
+# test = pd.read_pickle("./data/semcor_dataframe.pickle")
 
 # semcor_df.to_pickle("./data/semcor_data.pickle")
 # save into pickle to save computational cost
