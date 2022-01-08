@@ -116,6 +116,10 @@ print(SEMCOR_DATAFRAME.isnull().values.any())
 SEMCOR_DATAFRAME.to_json("./data/semcor_dataframe.json")
 
 #%%
+#TODO: store in ulm format!
+# https://wiki.fysik.dtu.dk/ase/ase/io/ulm.html
+# change lemma to offset ID
+
 # check if I can read semcor from pickle
 # test = pd.read_pickle("./data/semcor_dataframe.pickle")
 
