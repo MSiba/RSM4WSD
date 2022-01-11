@@ -1,6 +1,4 @@
-"""
-Source: https://github.com/cltl/pwgc
-"""
+"""Source: https://github.com/cltl/pwgc"""
 
 
 def generate_training_instances_v2(sentence_tokens,

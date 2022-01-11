@@ -185,7 +185,6 @@ class Token:
                 self.pos = ''
 
 
-
 class Sentence:
     """
     representation of sentence
