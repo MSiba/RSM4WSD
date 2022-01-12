@@ -3,7 +3,6 @@ import csv
 import pickle
 import utils
 
-"""Source: https://github.com/cltl/pwgc"""
 
 """Modified by: Siba Mohsen"""
 

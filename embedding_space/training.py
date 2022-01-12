@@ -1,8 +1,5 @@
-from nltk.corpus import wordnet as wn
 import numpy as np
 import pandas as pd
-import math
-import sys
 import wordnet_input
 import helper_functions
 from pprint import pprint as pp

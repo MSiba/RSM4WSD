@@ -5,6 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/attentive_context_length_encoder" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/datasets" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/datasets/PWNGC" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/embedding_space" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/data" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.7 (Ball4WSD)" jdkType="Python SDK" />

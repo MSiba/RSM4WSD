@@ -1,18 +1,9 @@
-from nltk.corpus import wordnet as wn
 import numpy as np
 import pandas as pd
-import math
-import sys
-import wordnet_input
 import helper_functions
-from pprint import pprint as pp
 import networkx as nx
-from networkx import pagerank
 from nltk.corpus import wordnet as wn
-import pickle
 import matplotlib.pyplot as plt
-from array import array
-import matplotlib
 
 """
 In this script, I call the initial functions: adjust2contain and adjust2disconnect and the train one family algorithm
