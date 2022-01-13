@@ -56,7 +56,7 @@ def adjust2contain(G, root_sphere, children, keep=False):
     subset_dataframe = DATAFRAME[DATAFRAME["synset"].isin(children)]  # [create_sphere(child) for child in children]
     children_spheres = subset_dataframe.to_dict(orient='records')
 
-    sum_radii = subset_dataframe["radius"].sum()  # TODO: delete /2
+    sum_radii = subset_dataframe["radius"].sum()
     # print("sum_radii = {}".format(sum_radii))
     avg_centers = subset_dataframe["center"].mean()
     # assert avg_centers==np.NAN, "The mean center is NAN"
@@ -86,7 +86,7 @@ def adjust2contain(G, root_sphere, children, keep=False):
         print("Containing <{}> in <{}>".format(child_sph["synset"], root_sphere["synset"]))
 
         # calculate the translation vector, by which we need to shift child sphere to mother sphere
-        trans_v = np.array(root_sphere["center"] - child_sph["center"]) #TODO: check if this yields what I want as vector
+        trans_v = np.array(root_sphere["center"] - child_sph["center"])
         print("Translation vector ", trans_v)
         eps = random.uniform(-0.5, 0.5)
         flex_trans_v = trans_v - child_sph["radius"] - eps
@@ -116,7 +116,6 @@ def adjust2contain(G, root_sphere, children, keep=False):
 
 def adjust2disconnect(G, root_sphere, children):
     """
-
     :param G:
     :param children:
     :return: returns all children of one family, such that they are disconnected from each other
@@ -156,6 +155,9 @@ def adjust2disconnect(G, root_sphere, children):
                         # child_i = gf.translate(child_i, transvector)
                         children_spheres[i] = child_i
                         loss = L_D(child_i, child_j)
+                        print("loss = ", loss)
+                        if loss != 0:
+                            break
                     else:
                         print("3")
 
@@ -166,39 +168,51 @@ def adjust2disconnect(G, root_sphere, children):
                             # child_j = gf.translate(child_j, transvector)
                             children_spheres[j] = child_j
                             loss = L_D(child_i, child_j)
+                            print("loss = ", loss)
+                            if loss != 0:
+                                break
+
 
                         else:
                             print("5")
 
                             if len(children_child_i) <= len(children_child_j):
                                 print("6")
-                                try:
+                                # try:
 
-                                    # print("guessing child i")
-                                    child_i = gf.rotate_arclength(child_i, root_sphere, loss)
+                                child_i = gf.rotate_arclength(child_i, root_sphere, loss)
 
-                                    children_spheres[i] = child_i
-                                    loss = L_D(child_i, child_j)
-                                except OSError as err:
-                                    print("adjust2disconnect is not able to disconnect {} from {}".format(child_i,
-                                                                                                          child_j))
-                                    print("OSError: {}".format(err))
+                                children_spheres[i] = child_i
+                                loss = L_D(child_i, child_j)
+                                print("loss = ", loss)
 
-                                # idea: calculate dist between old and new center as a vector and translate all baby spheres by adding this vector to them
+                                if loss != 0:
+                                    break
+
                             else:
                                 print("7")
 
-                                try:
-                                    print("7.1")
-                                    children_spheres[j] = child_j
-                                    loss = L_D(child_i, child_j)
-                                except OSError as err:
-                                    print("adjust2disconnect is not able to disconnect {} from {}".format(child_j, child_i))
-                                    print("OSError: {}".format(err))
+                            # try:
+                                print("7.1")
+                                child_j = gf.rotate_arclength(child_j, root_sphere, loss)
+                                children_spheres[j] = child_j
+                                loss = L_D(child_i, child_j)
+                                print("loss = ", loss)
+
+                                if loss != 0:
+                                    break
+
+                    # loss = L_D(child_i, child_j)
+                    # print("loss = ", loss)
                     adjust2disconnect(G, child_i, children_child_i)
                     adjust2disconnect(G, child_j, children_child_j)
                     print('8')
-                    break
+                loss = L_D(child_i, child_j)
+                print("loss = ", loss)
+
+
+                    # return loss
+                    # break
                 # else:
                 #     DATAFRAME
                 # loss = L_D(child_i, child_j)
@@ -206,7 +220,7 @@ def adjust2disconnect(G, root_sphere, children):
     for child_sph in children_spheres:
         DATAFRAME.loc[DATAFRAME["synset"] == child_sph["synset"], ["center", "radius"]] = [[child_sph["center"]], child_sph["radius"]]
 
-    return DATAFRAME # TODO: keep it the list of dict?
+    return DATAFRAME
 
 
 def adjust2shift(G, root_sphere, children, ratio=3):
@@ -291,15 +305,20 @@ def test_D(G, root_sphere):
     subset_dataframe = DATAFRAME[DATAFRAME["synset"].isin(children)]
     children_spheres = subset_dataframe.to_dict(orient='records')
 
-    loss = np.zeros((len(children)))
+    loss = np.zeros((len(children), len(children)))
 
-    if len(children) > 0:
-        for i, child_sphere in enumerate(children_spheres):
-            loss[i] = L_D(child_sphere, root_sphere)
-            if loss[i] != 0:
-                print("<{}> is overlaping <{}> with loss = {}".format(child_sphere["synset"], root_sphere["synset"], loss[i]))
-            else:
-                print("<{}> is distant from <{}>".format(child_sphere["synset"], root_sphere["synset"]))
+
+    if len(children) > 1:
+        for i, child_i in enumerate(children_spheres):
+            for j, child_j in enumerate(children_spheres):
+                if child_i["synset"] != child_j["synset"] and i < j:
+
+                    loss[i][j] = L_D(child_i, child_j)
+                    if loss[i][j] != 0:
+                        print("<{}> is overlaping <{}> with loss = {}".format(child_i["synset"], child_j["synset"], loss[i][j]))
+                    else:
+                        print("<{}> is distant from <{}>".format(child_i["synset"], child_j["synset"]))
+
     return loss
 
 
@@ -324,8 +343,20 @@ def training_one_family(G, root):
 
 
         print("Test PO: ", test_P(G, root_sphere))
+        print("Test DC: ", test_D(G, root_sphere))
 
     return DATAFRAME
+
+
+#TODO:
+def training_all_families(G):
+    return
+
+def testing_all_families(G):
+    return
+
+# TODO: storage?
+# TODO: centers? barymetric center? mean?
 
 wurzel = "freshwater_fish.n.01"
 
