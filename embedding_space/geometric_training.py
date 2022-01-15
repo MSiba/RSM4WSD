@@ -46,6 +46,7 @@ def sphere_dist(sphere1, sphere2):
     """
     return (sphere1["radius"] + sphere2["radius"] - np.linalg.norm(sphere1["center"]-sphere2["center"]))
 
+#%%
 def adjust2contain(G, root_sphere, children, keep=False):
     """
     to adjust the centers of the spheres s.t. they contain one another
@@ -87,32 +88,37 @@ def adjust2contain(G, root_sphere, children, keep=False):
 
         # calculate the translation vector, by which we need to shift child sphere to mother sphere
         trans_v = np.array(root_sphere["center"] - child_sph["center"])
-        print("Translation vector ", trans_v)
+        # print("Translation vector ", trans_v)
         eps = random.uniform(-0.5, 0.5)
         flex_trans_v = trans_v - child_sph["radius"] - eps
-        print("Flexible Translation vector: ", flex_trans_v)
+        # print("Flexible Translation vector: ", flex_trans_v)
         children_spheres[ind] = child_sph
 
         while distance_loss != 0:
             # trans_vec, child_sph = helper_functions.guess_P_coo(child_sph, root_sphere)#, VAR=distance_loss)
             child_sph = gf.translate(child_sph, flex_trans_v)
             # children_spheres[ind] = child_sph
-            # babies_child = get_all_children_of(G, child_sph)
+            babies_child = get_all_children_of(G, child_sph)
+            if len(babies_child) > 0:
+                # babies_child is only the synset name, how to
+                adjust2map(G, child_sph, babies_child, vector=flex_trans_v)
+                # adjust2contain(G, child_sph, babies_child)
 
             children_spheres[ind] = child_sph
-
-            if len(babies_child) > 0:
-                adjust2contain(G, child_sph, babies_child)
             distance_loss = L_P(child_sph, root_sphere)
+
+        # if len(babies_child) > 0:
+        #     # babies_child is only the synset name, how to
+        #     adjust2map(G, child_sph, babies_child, vector=flex_trans_v)
+        #     # adjust2contain(G, child_sph, babies_child)
+            # distance_loss = L_P(child_sph, root_sphere)
 
 
     for child_sph in children_spheres:
         DATAFRAME.loc[DATAFRAME["synset"] == child_sph["synset"], ["center", "radius"]] = [[child_sph["center"]], child_sph["radius"]]
 
-    return DATAFRAME #root_sphere, children_spheres
-# bass_mom = adjust2contain(G, DATAFRAME.loc[6], get_all_children_of(G, "freshwater_bass.n.01"))
-
-
+    return DATAFRAME
+#%%
 
 def adjust2disconnect(G, root_sphere, children):
     """
@@ -185,10 +191,13 @@ def adjust2disconnect(G, root_sphere, children):
                     if len(children_child_i) <= len(children_child_j):
                         print("6")
                         # try:
-
+                        old_pos_i = child_i["center"]
                         child_i = gf.rotate_arclength(child_i, child_j, root_sphere, loss, ETA=ETA)
-
+                        new_pos_i = child_i["center"]
                         children_spheres[i] = child_i
+                        print("Using Map for child i")
+                        pos_vec_i = np.array(new_pos_i - old_pos_i)
+                        adjust2map(G, child_i, children_child_i, pos_vec_i)
                         loss = L_D(child_i, child_j)
                         print("loss = ", loss)
 
@@ -203,8 +212,13 @@ def adjust2disconnect(G, root_sphere, children):
 
                     if len(children_child_i) > len(children_child_j):
                         print("7.1")
+                        old_pos_j = child_j["center"]
                         child_j = gf.rotate_arclength(child_j, child_i, root_sphere, loss, ETA=ETA)
                         children_spheres[j] = child_j
+                        new_pos_j = child_j["center"]
+                        print("Using Map for child j")
+                        pos_vec_j = np.array(new_pos_j - old_pos_j)
+                        adjust2map(G, child_j, children_child_j, vector=pos_vec_j)
                         loss = L_D(child_i, child_j)
                         print("loss = ", loss)
 
@@ -216,31 +230,80 @@ def adjust2disconnect(G, root_sphere, children):
                             continue
                         else:
                             # adjust2contain(G, child_j, children_child_j, keep=True)
-                            break
+                            pass
 
 
                     # adjust2disconnect(G, child_i, children_child_i)
                     # adjust2disconnect(G, child_j, children_child_j)
 
-                    adjust2contain(G, child_i, children_child_i, keep=True)
-                    adjust2contain(G, child_j, children_child_j, keep=True)
+                    # adjust2contain(G, child_i, children_child_i, keep=True)
+                    # adjust2contain(G, child_j, children_child_j, keep=True)
+
+                    # adjust2map(G, child_i, children_child_i)
+                    # adjust2map(G, child_j, children_child_j)
 
                     print('8')
                 loss = L_D(child_i, child_j)
                 print("loss = ", loss)
 
+
+    for child_sph in children_spheres:
+        DATAFRAME.loc[DATAFRAME["synset"] == child_sph["synset"], ["center", "radius"]] = [[child_sph["center"]], child_sph["radius"]]
+
     # check for after processing them all if some are still connected to each other
     children, test = test_D(G, root_sphere)
     if np.all((test == 0)):
-        pass
+        return DATAFRAME
     else:
         print("WARNING: there are connected sibling spheres.")
-        # adjust2disconnect(G, root_sphere, children)
+        adjust2disconnect(G, root_sphere, children)
+
+    # return DATAFRAME
+
+def adjust2map(G, mother_sphere, children, vector):
+
+    subset_dataframe = DATAFRAME[DATAFRAME["synset"].isin(children)]  # [create_sphere(child) for child in children]
+    children_spheres = subset_dataframe.to_dict(orient='records')
+
+
+    for i, child in enumerate(children_spheres):
+        # c1 = child["center"]
+        # r1 = child["radius"]
+        child = gf.translate(child, vector)
+        # child["center"] = c1 - c0 + np.array([random.uniform(-limit, limit),
+        #                                       random.uniform(-limit, limit)])
+        children_spheres[i] = child
+
 
     for child_sph in children_spheres:
         DATAFRAME.loc[DATAFRAME["synset"] == child_sph["synset"], ["center", "radius"]] = [[child_sph["center"]], child_sph["radius"]]
 
     return DATAFRAME
+
+# def adjust2map(G, root_sphere, children):
+#
+#     subset_dataframe = DATAFRAME[DATAFRAME["synset"].isin(children)]  # [create_sphere(child) for child in children]
+#     children_spheres = subset_dataframe.to_dict(orient='records')
+#
+#     c0 = root_sphere["center"]
+#     r0 = root_sphere["radius"]
+#
+#     for i, child in enumerate(children_spheres):
+#         c1 = child["center"]
+#         r1 = child["radius"]
+#         limit = r0 - r1 / 2
+#         transvec = np.array(c1 - c0)
+#         child = gf.translate(child, transvec)
+#         # child["center"] = c1 - c0 + np.array([random.uniform(-limit, limit),
+#         #                                       random.uniform(-limit, limit)])
+#         children_spheres[i] = child
+#
+#
+#     for child_sph in children_spheres:
+#         DATAFRAME.loc[DATAFRAME["synset"] == child_sph["synset"], ["center", "radius"]] = [[child_sph["center"]], child_sph["radius"]]
+#
+#     return DATAFRAME
+
 
 def adjust2shift(G, root_sphere, children, ratio=3):
     """
@@ -340,11 +403,11 @@ def test_D(G, root_sphere):
 
     return children, loss
 
-def visualize(df):
+def visualize(df, name="<name>"):
     figure, axes = plt.subplots()
     # axes.set_aspect(1)
 
-    plt.title("The graph structure")
+    plt.title("processing {}".format(name))
     plt.xlim([-20, 20])
     plt.ylim([-20, 20])
 
@@ -377,13 +440,14 @@ def training_one_family(G, root):
             adjust2disconnect(G, root_sphere, children)
 
         if len(children) == 1:
-            adjust2contain(G, root_sphere, children, keep=True)
+            # adjust2contain(G, root_sphere, children, keep=True)
             adjust2shift(G, root_sphere, children)
 
         print("Test PO: ", test_P(G, root_sphere))
 
         print("Test DC: ", test_D(G, root_sphere))
-    visualize(DATAFRAME)
+
+    visualize(DATAFRAME, name="<{}>".format(root_sphere["synset"]))
     print("DATAFRAME Test PO: ", test_P(G, root_sphere))
 
     print("DATAFRAME Test DC: ", test_D(G, root_sphere))
@@ -432,30 +496,30 @@ def draw_circle(sphere):
 # draw_circle(result.to_dict(orient="records")[0])
 
 
-def visualize(df):
-    figure, axes = plt.subplots()
-    # axes.set_aspect(1)
+# def visualize(df):
+#     figure, axes = plt.subplots()
+#     # axes.set_aspect(1)
+#
+#     plt.title("The graph structure")
+#     plt.xlim([-20, 20])
+#     plt.ylim([-20, 20])
+#
+#     for i in range(df.shape[0]):
+#         sphere = df.to_dict(orient="records")[i]
+#         # draw_circle(sphere)
+#         word = sphere["synset"]
+#         center = sphere["center"]
+#         radius = sphere["radius"]
+#
+#         axes.scatter(center[0], center[1], s=10)
+#         axes.text(center[0], center[1], s=word, color="b")
+#
+#         plot_circle = plt.Circle(center, radius, edgecolor="b", fill=False)
+#         axes.add_artist(plot_circle)
+#
+#     plt.show()
 
-    plt.title("The graph structure")
-    plt.xlim([-20, 20])
-    plt.ylim([-20, 20])
-
-    for i in range(df.shape[0]):
-        sphere = df.to_dict(orient="records")[i]
-        # draw_circle(sphere)
-        word = sphere["synset"]
-        center = sphere["center"]
-        radius = sphere["radius"]
-
-        axes.scatter(center[0], center[1], s=10)
-        axes.text(center[0], center[1], s=word, color="b")
-
-        plot_circle = plt.Circle(center, radius, edgecolor="b", fill=False)
-        axes.add_artist(plot_circle)
-
-    plt.show()
-
-
+#%%
 visualize(result)
 # visualize(bass_mom)
 # visualize(cd)
