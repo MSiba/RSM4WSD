@@ -198,6 +198,7 @@ def adjust2disconnect(G, root_sphere, children):
                             child_i = gf.translate(child_i, transvec)
                             continue
                         else:
+                            # adjust2contain(G, child_i, children_child_i, keep=True)
                             break
 
                     if len(children_child_i) > len(children_child_j):
@@ -214,21 +215,22 @@ def adjust2disconnect(G, root_sphere, children):
 
                             continue
                         else:
+                            # adjust2contain(G, child_j, children_child_j, keep=True)
                             break
 
 
                     # adjust2disconnect(G, child_i, children_child_i)
                     # adjust2disconnect(G, child_j, children_child_j)
 
-                    # adjust2contain(G, child_i, children_child_i, keep=True)
-                    # adjust2contain(G, child_j, children_child_j, keep=True)
+                    adjust2contain(G, child_i, children_child_i, keep=True)
+                    adjust2contain(G, child_j, children_child_j, keep=True)
 
                     print('8')
                 loss = L_D(child_i, child_j)
                 print("loss = ", loss)
 
     # check for after processing them all if some are still connected to each other
-    test = test_D(G, root_sphere)
+    children, test = test_D(G, root_sphere)
     if np.all((test == 0)):
         pass
     else:
@@ -295,7 +297,6 @@ def create_parent_sphere(sphere, children, EXT=1.0):
     return sphere
 
 
-
 def test_P(G, root_sphere):
 
     children = get_all_children_of(G, root_sphere["synset"])
@@ -312,7 +313,7 @@ def test_P(G, root_sphere):
                 print("<{}> is not part of <{}> with loss = {}".format(child_sphere["synset"], root_sphere["synset"], loss[i]))
             else:
                 print("<{}> is part of <{}>".format(child_sphere["synset"], root_sphere["synset"]))
-    return loss #zip(children_spheres, loss)
+    return children, loss
 
 
 def test_D(G, root_sphere):
@@ -336,8 +337,31 @@ def test_D(G, root_sphere):
                     else:
                         print("<{}> is distant from <{}>".format(child_i["synset"], child_j["synset"]))
 
-    return loss
 
+    return children, loss
+
+def visualize(df):
+    figure, axes = plt.subplots()
+    # axes.set_aspect(1)
+
+    plt.title("The graph structure")
+    plt.xlim([-20, 20])
+    plt.ylim([-20, 20])
+
+    for i in range(df.shape[0]):
+        sphere = df.to_dict(orient="records")[i]
+        # draw_circle(sphere)
+        word = sphere["synset"]
+        center = sphere["center"]
+        radius = sphere["radius"]
+
+        axes.scatter(center[0], center[1], s=10)
+        axes.text(center[0], center[1], s=word, color="b")
+
+        plot_circle = plt.Circle(center, radius, edgecolor="b", fill=False)
+        axes.add_artist(plot_circle)
+
+    plt.show()
 
 def training_one_family(G, root):
     children = get_all_children_of(G, root)
@@ -346,21 +370,23 @@ def training_one_family(G, root):
     if len(children) > 0:
         for child in children:
             training_one_family(G, child)
-            # print("Training One Fam of child {}".format(child))
 
         adjust2contain(G, root_sphere, children)
-        # adjust2disconnect(G, root_sphere, children)
 
         if len(children) > 1:
             adjust2disconnect(G, root_sphere, children)
 
         if len(children) == 1:
+            adjust2contain(G, root_sphere, children, keep=True)
             adjust2shift(G, root_sphere, children)
 
         print("Test PO: ", test_P(G, root_sphere))
 
         print("Test DC: ", test_D(G, root_sphere))
+    visualize(DATAFRAME)
+    print("DATAFRAME Test PO: ", test_P(G, root_sphere))
 
+    print("DATAFRAME Test DC: ", test_D(G, root_sphere))
     return DATAFRAME
 
 
@@ -405,7 +431,7 @@ def draw_circle(sphere):
     return
 # draw_circle(result.to_dict(orient="records")[0])
 
-#%%
+
 def visualize(df):
     figure, axes = plt.subplots()
     # axes.set_aspect(1)
