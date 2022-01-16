@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 # Experimenting on 1 synset only
 wurzel = "freshwater_fish.n.01"
-
+# wurzel = 'seafood.n.01'
 # initialize graph G
 G = nx.Graph()
 
@@ -59,11 +59,11 @@ G.add_edges_from(edges)
 
 #%%
 # store the graph in pickle
-nx.write_gpickle(G=G, path='./example_wordnet.gpickle')
+nx.write_gpickle(G=G, path='./small_example_wordnet.gpickle')
 
 #%%
 # read the graph
-G = nx.read_gpickle(path='./example_wordnet.gpickle')
+G = nx.read_gpickle(path='./small_example_wordnet.gpickle')
 #%%
 # -----------------------------------------------------------------------
 # plot the network

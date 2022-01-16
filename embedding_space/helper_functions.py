@@ -236,12 +236,12 @@ def L_P(sphere1, sphere2):
 
     dist_loss = r1 + np.linalg.norm(c1-c2) - r2
     if dist_loss > 0:
-        print("The distance loss between <{}> and <{}> is: {}.".format(sphere1["synset"],
-                                                                       sphere2["synset"],
-                                                                       dist_loss))
+        # print("The distance loss between <{}> and <{}> is: {}.".format(sphere1["synset"],
+        #                                                                sphere2["synset"],
+        #                                                                dist_loss))
         return dist_loss
     else:
-        print("<{}> is part of <{}>.".format(sphere1["synset"], sphere2["synset"]))
+        # print("<{}> is part of <{}>.".format(sphere1["synset"], sphere2["synset"]))
         return 0
 
 def guess_P_coo(sphere, mother_sphere, VAR=0.1, conf=0.1):
