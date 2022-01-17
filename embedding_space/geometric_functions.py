@@ -17,13 +17,11 @@ def find_angle(vec1, vec2):
     angle = np.arccos(np.dot(unit_1, unit_2))
     return angle * 180.0 / np.pi # in degrees
 
-# I am still not sure if I want to translate a point, a sphere or a whole subgraph/tree
 def translate(sphere, vec): #acts as prolongement
     sphere["center"] = sphere["center"] + vec
     return sphere
 
-def rotate(sphere, center, alpha): # I think I'll mostly use this as the origin (0,0) but for now keep it as it is
-
+def rotate(sphere, center, alpha):
     point = sphere["center"]
     # print("Point: {}, Center: {}".format(point, center))
     # rotate the vector about (center-point) by alpha
@@ -41,7 +39,7 @@ def rotate_arclength(sphere1, sphere2, root_sphere, arclength, ETA=0.1):
     :param sphere:
     :param root_sphere:
     :param arclength:
-    :param ETA: to extend the arclength a bit and ensure that the two spheres are not overlaping.
+    :param ETA: to extend the arc length a bit and ensure that the two spheres are not overlapping.
     :return:
     """
     c0 = root_sphere["center"]
