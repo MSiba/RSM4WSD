@@ -2,20 +2,70 @@ import networkx as nx
 from nltk.corpus import wordnet as wn
 import matplotlib.pyplot as plt
 
-
+#%%
 # Experimenting on 1 synset only
-wurzel = "freshwater_fish.n.01"
+# wurzel = "freshwater_fish.n.01"
 # wurzel = 'seafood.n.01'
+wurzel = "food.n.02"
 # initialize graph G
-G = nx.Graph()
+# G = nx.Graph()
 
 # WordNet's POS:
 POS = ['n', 'v', 'a', 'r']
 
+# vertices = []
+# edges = []
+# vertices.append(wurzel)
+
+
+def extract_hyponyms(root_synset):
+    vertices = [root_synset]
+    edges = []
+
+    # for word in wn.synset(root_synset).hyponyms():
+    #     vertices.append(word.name())
+
+    # new_vertices = []
+
+    for node in vertices:
+        synset = wn.synset(node)
+
+        try:
+            for hyponym in synset.hyponyms():
+                # add this hyponym to the nodes of wordnet
+                vertices.append(hyponym.name())
+                # relate hyponym with edge
+                edges.append(tuple((node, hyponym.name())))
+            # extract_hyponyms(node)
+        except AttributeError:
+            continue
+
+    nodes = vertices #+ new_vertices
+    G = nx.Graph()
+    G.add_nodes_from(nodes)
+    G.add_edges_from(edges)
+
+    return G
+#%%
+WN = extract_hyponyms(wurzel)
+#%%
+# store graph
+# store the graph in pickle
+nx.write_gpickle(G=WN, path='./food_wordnet.gpickle')
+
+#%%
+# read the graph
+G = nx.read_gpickle(path='./food_wordnet.gpickle')
+
+#%%
+# initialize graph G
+G = nx.DiGraph()
+wurzel = 'seafood.n.01'
+
+
 vertices = []
 edges = []
 vertices.append(wurzel)
-
 
 for word in wn.synset(wurzel).hyponyms():
     vertices.append(word.name())
@@ -35,30 +85,18 @@ G.add_nodes_from(vertices)
 
 # I think that we are not really interested in storing the edge labels, we just need a relation
 
-def extract_hyponyms(G):
-    new_vertices = []
-
-    for node in G.nodes():
-        synset = wn.synset(node)
-
-        # try:
-        #     for hypernym in synset.hypernyms():
-        #         edges.append(tuple((hypernym.name(), node)))
-        # except AttributeError:
-        #     continue
-        try:
-            for hyponym in synset.hyponyms():
-                # add this hyponym to the nodes of wordnet
-                new_vertices.append(hyponym.name())
-                # relate hyponym with edge
-                edges.append(tuple((node, hyponym.name())))
-        except AttributeError:
-            continue
-
-        G.add_nodes_from(new_vertices)
-        G.add_edges_from(edges)
-        extract_hyponyms(G)
-    return G
+for node in G.nodes():
+    synset = wn.synset(node)
+    # try:
+    #     for hypernym in synset.hypernyms():
+    #         edges.append(tuple((hypernym.name(), node)))
+    # except AttributeError:
+    #     continue
+    try:
+        for hyponym in synset.hyponyms():
+            edges.append(tuple((node, hyponym.name())))
+    except AttributeError:
+        continue
 
 
 
@@ -75,7 +113,7 @@ G.add_edges_from(edges)
 
 #%%
 # store the graph in pickle
-nx.write_gpickle(G=G, path='./small_example_wordnet.gpickle')
+nx.write_gpickle(G=G, path='./old_seafood_example_wordnet.gpickle')
 
 #%%
 # read the graph

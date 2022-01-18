@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 from helper_functions import L_P, L_D
 import geometric_functions as gf
-from wordnet_graph import plot_network
+from visual_embed_space import plot_network
 
 # "__author__ = Siba Mohsen"
 
@@ -18,10 +18,20 @@ from wordnet_graph import plot_network
 
 begin_time = datetime.datetime.now()
 
-wurzel = 'seafood.n.01'
-G = nx.read_gpickle(path='example_wordnet.gpickle')
+# wurzel = 'food.n.02'
+# G = nx.read_gpickle(path='food_wordnet.gpickle')
+# # it takes too long to plot it because it is huge
+# # plot_network(G)
+#%%
+wurzel = 'food.n.02'
+# wurzel = 'seafood.n.01'
+G = nx.read_gpickle(path='old_seafood_example_wordnet.gpickle')
+#%%
+G.add_nodes_from([wurzel])
+# G.add_edges_from([sorted((i,j)) for i, j in zip(['food.n.02'], ['seafood.n.01'])])
+G.add_edges_from([tuple((wurzel, 'seafood.n.01'))])
 plot_network(G)
-
+#%%
 # wurzel = "freshwater_fish.n.01"
 # G = nx.read_gpickle(path='small_example_wordnet.gpickle')
 # plot_network(G)
@@ -38,7 +48,7 @@ Behaviour: I need to adjust the calls of children, since it is only optimizing o
 """
 # ---------------------------------------------------------------------
 
-def create_sphere(syn_name,min_value=-15, max_value=15, Ndim=2):
+def create_sphere(syn_name,min_value=-100, max_value=100, Ndim=2):
     return {"synset": syn_name,
             "center": np.random.randint(min_value, max_value, size=(1, Ndim))[0],
             "radius": 1.0}
@@ -82,6 +92,9 @@ def adjust2contain(G, root_sphere, children, keep=False):
 
     sum_radii = subset_dataframe["radius"].sum()
     # print("sum_radii = {}".format(sum_radii))
+    if len(children) == 1:
+        root_sphere = gf.enlarge(root_sphere, sum_radii*2)
+
     avg_centers = subset_dataframe["center"].mean()
     # assert avg_centers==np.NAN, "The mean center is NAN"
     avg_centers = np.array([np.round(avg_centers[0],1), np.round(avg_centers[1],1)])
@@ -94,6 +107,7 @@ def adjust2contain(G, root_sphere, children, keep=False):
                                                                                        root_sphere["radius"]]
 
     print("Root center", root_sphere["center"])
+
     for ind, child_sph in enumerate(children_spheres):
         print("Initial child center: ", child_sph["center"])
 
@@ -112,12 +126,13 @@ def adjust2contain(G, root_sphere, children, keep=False):
         # # calculate the translation vector, by which we need to shift child sphere to mother sphere
         # trans_v = np.array(root_sphere["center"] - child_sph["center"])
         # # print("Translation vector ", trans_v)
-        # eps = random.uniform(-0.5, 0.5)
+        # eps = random.uniform(-0.2, 0.2)
         # flex_trans_v = trans_v - child_sph["radius"] - eps
         # # print("Flexible Translation vector: ", flex_trans_v)
         # # children_spheres[ind] = child_sph
 
         while distance_loss != 0:
+            print("Searching suitable distance loss in adjust2contain")
             # calculate the translation vector, by which we need to shift child sphere to mother sphere
             trans_v = np.array(root_sphere["center"] - child_sph["center"])
             # print("Translation vector ", trans_v)
@@ -143,7 +158,7 @@ def adjust2contain(G, root_sphere, children, keep=False):
         #     # babies_child is only the synset name, how to
         #     adjust2map(G, child_sph, babies_child, vector=flex_trans_v)
         #     # adjust2contain(G, child_sph, babies_child)
-            # distance_loss = L_P(child_sph, root_sphere)
+        #     distance_loss = L_P(child_sph, root_sphere)
 
 
     for child_sph in children_spheres:
@@ -178,15 +193,13 @@ def shift_whole_family(G, root, initial_center, current_center, children):
         baby = gf.translate(baby, tmp_vec)
         children_spheres[k] = baby
         children_baby = get_all_children_of(G, baby)
-        # if len(children_baby) > 0:
-        #     shift_whole_family(G=G,
-        #                        initial_center=initial_baby,
-        #                        current_center=children_spheres[k]["center"],
-        #                        children=children_baby)
-        # else:
-        #     pass
-
-
+        if len(children_baby) > 0:
+            print("shifting babies of kids")
+            shift_whole_family(G=G,
+                               root=baby,
+                               initial_center=initial_baby,
+                               current_center=children_spheres[k]["center"],
+                               children=children_baby)
 
     for child_sph_i in children_spheres:
         DATAFRAME.loc[DATAFRAME["synset"] == child_sph_i["synset"], ["center", "radius"]] = [
@@ -198,11 +211,11 @@ def shift_whole_family(G, root, initial_center, current_center, children):
     if np.all((P_loss == 0)):
         pass
     else:
-        for j, baby, ploss in enumerate(zip(babies, P_loss)):
+        for baby, ploss in zip(babies, P_loss):
             if ploss != 0:
                 vec = np.array(current_center - baby["center"])
                 ploss_vec = vec * ploss / np.linalg.norm(vec)
-                adjust2map(G, root, [baby], vector=ploss_vec)
+                adjust2map(G, root, [baby["synset"]], vector=ploss_vec)
 
     return DATAFRAME
 
@@ -436,7 +449,7 @@ def adjust2map(G, mother_sphere, children, vector):
     return DATAFRAME
 
 
-def adjust2shift(G, root_sphere, children, ratio=3):
+def adjust2shift(G, root_sphere, children, ratio=4):
     """
     In case a root sphere has only 1 child, this child is always contained exactly on the center.
     adjust2shift shifts the child a bit
@@ -457,8 +470,13 @@ def adjust2shift(G, root_sphere, children, ratio=3):
     print("children spheres", children_spheres)
 
     for index, child in enumerate(children_spheres):
+        initial_center = child["center"]
         child = gf.translate(child, vector)
         children_spheres[index] = child
+
+        babies_of_child = get_all_children_of(G, child["synset"])
+        if len(babies_of_child) > 0:
+            shift_whole_family(G, child, initial_center, child["center"], babies_of_child)
 
     for child_sph in children_spheres:
         DATAFRAME.loc[DATAFRAME["synset"] == child_sph["synset"], ["center", "radius"]] = [[child_sph["center"]], child_sph["radius"]]
@@ -565,6 +583,7 @@ def visualize(df, name="<name>"):
 
 def training_one_family(G, root):
     children = get_all_children_of(G, root)
+
     root_sphere = DATAFRAME[DATAFRAME["synset"]==root].to_dict(orient="records")[0]
 
     if len(children) > 0:
@@ -625,7 +644,6 @@ def test_one_family(G, df, root):
         print(D_loss)
 
 
-# test_one_family(G, DATAFRAME, wurzel)
 #%%
 #TODO:
 def training_all_families(G):
@@ -641,10 +659,12 @@ def testing_all_families(G):
 # small_fam = training_one_family(G, "freshwater_bass.n.01")
 result = training_one_family(G, wurzel)
 # print(result)
+test_one_family(G, DATAFRAME, wurzel)
 
 
+# visualize(result)
 #%%
-visualize(result)
+# visualize(result)
 # visualize(bass_mom)
 # visualize(cd)
 #%%

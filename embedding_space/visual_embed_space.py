@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import networkx as nx
 import training
+
 
 def visualize(word, color="k"):
     """
@@ -38,4 +40,17 @@ def visualize(word, color="k"):
 
     plt.show()
 
-visualize("bass")
+# visualize("bass")
+
+def plot_network(G):
+
+    plt.figure(figsize=(12, 12))
+
+    pos = nx.spring_layout(G, seed=1734289230)
+
+    nx.draw(G, with_labels=True,
+            node_color='skyblue',
+            edge_cmap=plt.cm.Blues,
+            pos = pos)
+    nx.draw_networkx_edge_labels(G, pos=pos)
+    plt.show()
