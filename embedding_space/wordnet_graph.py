@@ -34,20 +34,36 @@ G.add_nodes_from(vertices)
 # meronym is a part-of relation of its holonym, e.g. finger(meronym) is part-of hand(holonym)
 
 # I think that we are not really interested in storing the edge labels, we just need a relation
-for node in G.nodes():
-    synset = wn.synset(node)
-    # try:
-    #     for hypernym in synset.hypernyms():
-    #         edges.append(tuple((hypernym.name(), node)))
-    # except AttributeError:
-    #     continue
-    try:
-        for hyponym in synset.hyponyms():
-            edges.append(tuple((node, hyponym.name())))
-    except AttributeError:
-        continue
+
+def extract_hyponyms(G):
+    new_vertices = []
+
+    for node in G.nodes():
+        synset = wn.synset(node)
+
+        # try:
+        #     for hypernym in synset.hypernyms():
+        #         edges.append(tuple((hypernym.name(), node)))
+        # except AttributeError:
+        #     continue
+        try:
+            for hyponym in synset.hyponyms():
+                # add this hyponym to the nodes of wordnet
+                new_vertices.append(hyponym.name())
+                # relate hyponym with edge
+                edges.append(tuple((node, hyponym.name())))
+        except AttributeError:
+            continue
+
+        G.add_nodes_from(new_vertices)
+        G.add_edges_from(edges)
+        extract_hyponyms(G)
+    return G
+
+
 
 #%%
+print(len(G.nodes()), G.nodes())
 print(edges)
 print(len(edges))  # 308202 edges
 

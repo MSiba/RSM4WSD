@@ -1,3 +1,4 @@
+import datetime
 import random
 import numpy as np
 import pandas as pd
@@ -9,9 +10,13 @@ from helper_functions import L_P, L_D
 import geometric_functions as gf
 from wordnet_graph import plot_network
 
+# "__author__ = Siba Mohsen"
+
 #TODO: use pickle5 for python 3.8+ or arrow to store pickles more efficiently
 # https://stackoverflow.com/questions/63329657/python-3-7-error-unsupported-pickle-protocol-5
 # https://arrow.apache.org/docs/python/ipc.html#reading-from-stream-and-file-format-for-pandas
+
+begin_time = datetime.datetime.now()
 
 wurzel = 'seafood.n.01'
 G = nx.read_gpickle(path='example_wordnet.gpickle')
@@ -117,7 +122,7 @@ def adjust2contain(G, root_sphere, children, keep=False):
             trans_v = np.array(root_sphere["center"] - child_sph["center"])
             # print("Translation vector ", trans_v)
             eps = random.uniform(0, child_sph["radius"])
-            flex_trans_v = trans_v - child_sph["radius"] + eps
+            flex_trans_v = trans_v - child_sph["radius"] - eps
             # print("Flexible Translation vector: ", flex_trans_v)
             # children_spheres[ind] = child_sph
             # ------------------------------------------------
@@ -152,10 +157,10 @@ def adjust2contain(G, root_sphere, children, keep=False):
         adjust2contain(G, root_sphere, children, keep=True)
 #%%
 
-def shift_whole_family(G, initial_center, current_center, children):
+def shift_whole_family(G, root, initial_center, current_center, children):
 
     # def shift_whole_family(G, initial_mother, current_mother, children):
-    #TODO: I need to check why it is not working well
+    # TODO: I need to check why it is not working well
     # compare with the simplest version!
     # maybe add it to shift2adjust also?
 
@@ -165,29 +170,45 @@ def shift_whole_family(G, initial_center, current_center, children):
     subset_dataframe = DATAFRAME[DATAFRAME["synset"].isin(children)]
     children_spheres = subset_dataframe.to_dict(orient='records')
 
+    # eps = random.uniform(0, 0.2)
+
     for k, baby in enumerate(children_spheres):
         initial_baby = baby["center"]
-        tmp_vec = np.array(current_center - initial_center)
+        tmp_vec = np.array(current_center - initial_center) #+ eps
         baby = gf.translate(baby, tmp_vec)
         children_spheres[k] = baby
         children_baby = get_all_children_of(G, baby)
-        if len(children_baby) > 0:
-            shift_whole_family(G=G,
-                               initial_center=initial_baby,
-                               current_center=children_spheres[k]["center"],
-                               children=children_baby)
-        else:
-            pass
+        # if len(children_baby) > 0:
+        #     shift_whole_family(G=G,
+        #                        initial_center=initial_baby,
+        #                        current_center=children_spheres[k]["center"],
+        #                        children=children_baby)
+        # else:
+        #     pass
+
+
 
     for child_sph_i in children_spheres:
         DATAFRAME.loc[DATAFRAME["synset"] == child_sph_i["synset"], ["center", "radius"]] = [
             [child_sph_i["center"]], child_sph_i["radius"]]
 
+    # check if after chifting the whole family, all the children follow their mothers
+    babies, P_loss = test_P(G, root)
+
+    if np.all((P_loss == 0)):
+        pass
+    else:
+        for j, baby, ploss in enumerate(zip(babies, P_loss)):
+            if ploss != 0:
+                vec = np.array(current_center - baby["center"])
+                ploss_vec = vec * ploss / np.linalg.norm(vec)
+                adjust2map(G, root, [baby], vector=ploss_vec)
+
     return DATAFRAME
 
 #%%
 
-def adjust2disconnect(G, root_sphere, children):
+def adjust2disconnect(G, root_sphere, children, STEP_SIZE=0.5):
     """
     :param G:
     :param children:
@@ -233,8 +254,13 @@ def adjust2disconnect(G, root_sphere, children):
                         print("loss = ", loss)
                         if loss != 0:
                             ETA += random.uniform(0,1)
-                            transvec = np.array([random.uniform(-0.5, 0.5), random.uniform(-0.5, 0.5)])
+                            transvec = np.array([random.uniform(-STEP_SIZE, STEP_SIZE),
+                                                 random.uniform(-STEP_SIZE, STEP_SIZE)])
                             child_i = gf.translate(child_i, transvec)
+                            # test_part_of = L_P(child_i, root_sphere)
+                            # if test_part_of != 0:
+                            #     transvec -= test_part_of # TODO:  needs more optimization to update the radius?
+                            #     child_i = gf.translate(child_i, transvec)
                             continue
                         else:
                             break
@@ -249,8 +275,13 @@ def adjust2disconnect(G, root_sphere, children):
                         print("loss = ", loss)
                         if loss != 0:
                             ETA += random.uniform(0, 1)
-                            transvec = np.array([random.uniform(-0.5, 0.5), random.uniform(-0.5, 0.5)])
+                            transvec = np.array([random.uniform(-STEP_SIZE, STEP_SIZE),
+                                                 random.uniform(-STEP_SIZE, STEP_SIZE)])
                             child_j = gf.translate(child_j, transvec)
+                            # test_part_of = L_P(child_j, root_sphere)
+                            # if test_part_of != 0:
+                            #     transvec -= test_part_of
+                            #     child_j = gf.translate(child_j, transvec)
                             continue
                         else:
                             break
@@ -272,22 +303,32 @@ def adjust2disconnect(G, root_sphere, children):
 
                         if loss != 0:
                             ETA += random.uniform(0,1)
-                            transvec = np.array([random.uniform(-0.5, 0.5), random.uniform(-0.5, 0.5)])
+                            transvec = np.array([random.uniform(-STEP_SIZE, STEP_SIZE),
+                                                 random.uniform(-STEP_SIZE, STEP_SIZE)])
                             child_i = gf.translate(child_i, transvec)
+                            # test_part_of = L_P(child_i, root_sphere)
+                            # if test_part_of != 0:
+                            #     transvec -= test_part_of
+                            #     child_i = gf.translate(child_i, transvec)
                             continue
                         else:
                             shift_whole_family(G=G,
+                                               root=child_i,
                                                initial_center=initial_center_i,
                                                current_center=children_spheres[i]["center"],
                                                children=children_child_i)
-                            babies, P_loss = test_P(G, child_i)
-                            if np.all((P_loss == 0)):
-                                print("all babies of child i are correctly adjusted during disconnection")
-                            else:
-                                print("Some babies of child i of the root sphere are damaged after disconnection")
-                                print("root sphere: ", root_sphere["synset"])
-                                print("child_i: ", child_i["synset"])
-                                print("Babies and their losses: \n", babies, "\n", P_loss)
+                            # babies, P_loss = test_P(G, child_i)
+                            # if np.all((P_loss == 0)):
+                            #     print("all babies of child i are correctly adjusted during disconnection")
+                            # else:
+                            #     for baby, ploss in zip(babies, P_loss):
+                            #         if ploss != 0:
+                            #             vec = np.array(child_i["center"] - baby["center"]) -2*baby["radius"]-loss
+                            #             adjust2map(G, child_i, [baby], vector=vec)
+                            #     print("Some babies of child i of the root sphere are damaged after disconnection")
+                            #     print("root sphere: ", root_sphere["synset"])
+                            #     print("child_i: ", child_i["synset"])
+                            #     print("Babies and their losses: \n", babies, "\n", P_loss)
                             break
 
                     if len(children_child_i) > len(children_child_j):
@@ -305,22 +346,33 @@ def adjust2disconnect(G, root_sphere, children):
 
                         if loss != 0:
                             ETA += random.uniform(0,1)
-                            transvec = np.array([random.uniform(-0.5, 0.5), random.uniform(-0.5, 0.5)])
+                            transvec = np.array([random.uniform(-STEP_SIZE, STEP_SIZE),
+                                                 random.uniform(-STEP_SIZE, STEP_SIZE)])
                             child_j = gf.translate(child_j, transvec)
+                            # test_part_of = L_P(child_j, root_sphere)
+                            # if test_part_of != 0:
+                            #     transvec -= test_part_of
+                            #     child_j = gf.translate(child_j, transvec)
                             continue
                         else:
                             shift_whole_family(G=G,
+                                               root=child_j,
                                                initial_center=initial_center_j,
                                                current_center=children_spheres[j]["center"],
                                                children=children_child_j)
-                            babies, P_loss = test_P(G, child_j)
-                            if np.all((P_loss == 0)):
-                                print("all babies of child j are correctly adjusted during disconnection")
-                            else:
-                                print("Some babies of child j of the root sphere are damaged after disconnection")
-                                print("root sphere: ", root_sphere["synset"])
-                                print("child_j: ", child_j["synset"])
-                                print("Babies and their losses: \n", babies, "\n", P_loss)
+                            # babies, P_loss = test_P(G, child_j)
+                            # if np.all((P_loss == 0)):
+                            #     print("all babies of child j are correctly adjusted during disconnection")
+                            # else:
+                            #     for baby, ploss in zip(babies, P_loss):
+                            #         if ploss != 0:
+                            #             #TODO: baby sphere, not only name
+                            #             vec = np.array(child_j["center"] - baby["center"]) -2 * baby["radius"]-loss
+                            #             adjust2map(G, child_j, [baby], vector=vec)
+                            #     print("Some babies of child j of the root sphere are damaged after disconnection")
+                            #     print("root sphere: ", root_sphere["synset"])
+                            #     print("child_j: ", child_j["synset"])
+                            #     print("Babies and their losses: \n", babies, "\n", P_loss)
 
                             break
 
@@ -455,7 +507,7 @@ def test_P(G, root_sphere):
             #     print("<{}> is not part of <{}> with loss = {}".format(child_sphere["synset"], root_sphere["synset"], loss[i]))
             # else:
             #     print("<{}> is part of <{}>".format(child_sphere["synset"], root_sphere["synset"]))
-    return children, loss
+    return children_spheres, loss
 
 
 def test_D(G, root_sphere):
@@ -528,7 +580,7 @@ def training_one_family(G, root):
             # adjust2contain(G, root_sphere, children, keep=True)
             adjust2shift(G, root_sphere, children)
 
-    visualize(DATAFRAME, name="<{}>".format(root_sphere["synset"]))
+    # visualize(DATAFRAME, name="<{}>".format(root_sphere["synset"]))
 
     return DATAFRAME
 
@@ -601,4 +653,5 @@ visualize(result)
 #%%
 # blabla = pd.read_pickle("./seafood.pickle")
 
-print(test_P(G, DATAFRAME.loc[1]))
+
+print(datetime.datetime.now() - begin_time)
