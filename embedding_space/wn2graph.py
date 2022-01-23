@@ -51,4 +51,4 @@ WN = extract_hyponyms(wurzel)
 #%%
 # store graph
 # store the graph in pickle
-nx.write_gpickle(G=WN, path='./directed_seafood_wordnet.gpickle')
+nx.write_gpickle(G=WN, path='./small_example_wordnet.gpickle')

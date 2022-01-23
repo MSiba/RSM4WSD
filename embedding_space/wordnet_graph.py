@@ -60,7 +60,7 @@ G = nx.read_gpickle(path='./food_wordnet.gpickle')
 #%%
 # initialize graph G
 G = nx.DiGraph()
-wurzel = 'seafood.n.01'
+wurzel = 'freshwater_fish.n.01'
 
 
 vertices = []
@@ -113,7 +113,7 @@ G.add_edges_from(edges)
 
 #%%
 # store the graph in pickle
-nx.write_gpickle(G=G, path='./old_seafood_example_wordnet.gpickle')
+nx.write_gpickle(G=G, path='./small_example_wordnet.gpickle')
 
 #%%
 # read the graph

@@ -35,7 +35,7 @@ plot_network(G)
 # wurzel = "freshwater_fish.n.01"
 # G = nx.read_gpickle(path='small_example_wordnet.gpickle')
 # plot_network(G)
-
+#%%
 
 """Current status:
 this code works very well for our example,
@@ -177,7 +177,7 @@ def shift_whole_family(G, root, initial_center, current_center, children):
     # def shift_whole_family(G, initial_mother, current_mother, children):
     # TODO: I need to check why it is not working well
     # compare with the simplest version!
-    # maybe add it to shift2adjust also?
+    # maybe add it to shift2adjust also? yes, added
 
     # initial_center = initial_mother["center"]
     # current_center = current_mother["center"]
@@ -193,13 +193,27 @@ def shift_whole_family(G, root, initial_center, current_center, children):
         baby = gf.translate(baby, tmp_vec)
         children_spheres[k] = baby
         children_baby = get_all_children_of(G, baby)
-        if len(children_baby) > 0:
-            print("shifting babies of kids")
-            shift_whole_family(G=G,
-                               root=baby,
-                               initial_center=initial_baby,
-                               current_center=children_spheres[k]["center"],
-                               children=children_baby)
+        # TODO: here begin
+        # why it is projecting to similar places?
+        # why do I have more disconnection errors between siblings? they are all projected to similar places!
+        # shift_whole_family(G=G,
+        #                    root=baby,
+        #                    initial_center=initial_baby,
+        #                    current_center=children_spheres[k]["center"],
+        #                    children=children_baby)
+
+        ######
+        # if len(children_baby) > 0:
+        #     print("shifting babies of kids")
+        #     shift_whole_family(G=G,
+        #                        root=baby,
+        #                        initial_center=initial_baby,
+        #                        current_center=children_spheres[k]["center"],
+        #                        children=children_baby)
+        # else:
+        #     tmp_vec = np.array(children_spheres[k]["center"] - initial_baby)
+        #     adjust2map(G, mother_sphere=root, children=[baby], vector=tmp_vec)
+
 
     for child_sph_i in children_spheres:
         DATAFRAME.loc[DATAFRAME["synset"] == child_sph_i["synset"], ["center", "radius"]] = [
@@ -216,6 +230,27 @@ def shift_whole_family(G, root, initial_center, current_center, children):
                 vec = np.array(current_center - baby["center"])
                 ploss_vec = vec * ploss / np.linalg.norm(vec)
                 adjust2map(G, root, [baby["synset"]], vector=ploss_vec)
+
+    # ------------------------------------------ further kids in tree
+
+    for k, baby in enumerate(children_spheres):
+        initial_baby = baby["center"]
+        children_baby = get_all_children_of(G, baby)
+        shift_whole_family(G=G,
+                           root=baby,
+                           initial_center=initial_baby,
+                           current_center=children_spheres[k]["center"],
+                           children=children_baby)
+    #     if len(children_baby) > 0:
+    #         print("shifting babies of kids")
+    #         shift_whole_family(G=G,
+    #                            root=baby,
+    #                            initial_center=initial_baby,
+    #                            current_center=children_spheres[k]["center"],
+    #                            children=children_baby)
+    #     else:
+    #         tmp_vec = np.array(children_spheres[k]["center"] - initial_baby)
+    #         adjust2map(G, mother_sphere=root, children=[baby], vector=tmp_vec)
 
     return DATAFRAME
 
@@ -599,7 +634,7 @@ def training_one_family(G, root):
             # adjust2contain(G, root_sphere, children, keep=True)
             adjust2shift(G, root_sphere, children)
 
-    # visualize(DATAFRAME, name="<{}>".format(root_sphere["synset"]))
+    visualize(DATAFRAME, name="<{}>".format(root_sphere["synset"]))
 
     return DATAFRAME
 
