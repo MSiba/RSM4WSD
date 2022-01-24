@@ -12,6 +12,14 @@ from visual_embed_space import plot_network
 
 # "__author__ = Siba Mohsen"
 
+"""
+comment 24.01.2022:
+the problem with this script is that:
+1. shift_one_family shifts only 1 level family but not children
+2. Number of iterations for big graphs or bad initialization fails! 
+3. I cannot ensure how it will function for the whole graph
+"""
+
 #TODO: use pickle5 for python 3.8+ or arrow to store pickles more efficiently
 # https://stackoverflow.com/questions/63329657/python-3-7-error-unsupported-pickle-protocol-5
 # https://arrow.apache.org/docs/python/ipc.html#reading-from-stream-and-file-format-for-pandas
@@ -42,7 +50,7 @@ this code works very well for our example,
 I just need to check how deep can it go with root the mother of the "freshwater_fish": 'seafood.n.01'
 Behaviour: I need to adjust the calls of children, since it is only optimizing one family --> more recursion in adjust2contain and adjust2disconnect
          ** When creating the graph, I need to consider all the nodes till the leaves!
-- add tests!
+- add tests! --> added tests
 - test for whole graph
 - clean 
 """
@@ -182,25 +190,34 @@ def shift_whole_family(G, root, initial_center, current_center, children):
     # initial_center = initial_mother["center"]
     # current_center = current_mother["center"]
 
-    subset_dataframe = DATAFRAME[DATAFRAME["synset"].isin(children)]
-    children_spheres = subset_dataframe.to_dict(orient='records')
+    # subset_dataframe = DATAFRAME[DATAFRAME["synset"].isin(children)]
+    # children_spheres = subset_dataframe.to_dict(orient='records')
 
     # eps = random.uniform(0, 0.2)
+    tmp_vec = np.array(current_center - initial_center)
+    # adjust2map(G, root, children, tmp_vec)
 
-    for k, baby in enumerate(children_spheres):
-        initial_baby = baby["center"]
-        tmp_vec = np.array(current_center - initial_center) #+ eps
-        baby = gf.translate(baby, tmp_vec)
-        children_spheres[k] = baby
-        children_baby = get_all_children_of(G, baby)
-        # TODO: here begin
-        # why it is projecting to similar places?
-        # why do I have more disconnection errors between siblings? they are all projected to similar places!
-        # shift_whole_family(G=G,
-        #                    root=baby,
-        #                    initial_center=initial_baby,
-        #                    current_center=children_spheres[k]["center"],
-        #                    children=children_baby)
+    subset_dataframe = DATAFRAME[DATAFRAME["synset"].isin(children)]
+    children_spheres = subset_dataframe.to_dict(orient='records')
+    if children != []:
+        for k, baby in enumerate(children_spheres):
+            initial_baby = baby["center"]
+            # tmp_vec = np.array(current_center - initial_center) #+ eps
+            # # adjust2map spart mir ein anderer aufruf von DATAFRAME
+            # baby = gf.translate(baby, tmp_vec)
+            # children_spheres[k] = baby
+            children_baby = get_all_children_of(G, baby)
+            # TODO: here begin
+            # why it is projecting to similar places?
+            # why do I have more disconnection errors between siblings? they are all projected to similar places!
+            # adjust2map(G, baby, children_baby, tmp_vec)
+            shift_whole_family(G=G,
+                               root=baby,
+                               initial_center=initial_baby,
+                               current_center=children_spheres[k]["center"],
+                               children=children_baby)
+
+    adjust2map(G, root, children, tmp_vec)
 
         ######
         # if len(children_baby) > 0:
@@ -215,32 +232,33 @@ def shift_whole_family(G, root, initial_center, current_center, children):
         #     adjust2map(G, mother_sphere=root, children=[baby], vector=tmp_vec)
 
 
-    for child_sph_i in children_spheres:
-        DATAFRAME.loc[DATAFRAME["synset"] == child_sph_i["synset"], ["center", "radius"]] = [
-            [child_sph_i["center"]], child_sph_i["radius"]]
+    # for child_sph_i in children_spheres:
+    #     DATAFRAME.loc[DATAFRAME["synset"] == child_sph_i["synset"], ["center", "radius"]] = [
+    #         [child_sph_i["center"]], child_sph_i["radius"]]
 
     # check if after chifting the whole family, all the children follow their mothers
-    babies, P_loss = test_P(G, root)
-
-    if np.all((P_loss == 0)):
-        pass
-    else:
-        for baby, ploss in zip(babies, P_loss):
-            if ploss != 0:
-                vec = np.array(current_center - baby["center"])
-                ploss_vec = vec * ploss / np.linalg.norm(vec)
-                adjust2map(G, root, [baby["synset"]], vector=ploss_vec)
+    # babies, P_loss = test_P(G, root)
+    #
+    # if np.all((P_loss == 0)):
+    #     pass
+    # else:
+    #     for baby, ploss in zip(babies, P_loss):
+    #         if ploss != 0:
+    #             vec = np.array(current_center - baby["center"])
+    #             ploss_vec = vec * ploss / np.linalg.norm(vec)
+    #             adjust2map(G, root, [baby["synset"]], vector=ploss_vec)
 
     # ------------------------------------------ further kids in tree
 
-    for k, baby in enumerate(children_spheres):
-        initial_baby = baby["center"]
-        children_baby = get_all_children_of(G, baby)
-        shift_whole_family(G=G,
-                           root=baby,
-                           initial_center=initial_baby,
-                           current_center=children_spheres[k]["center"],
-                           children=children_baby)
+    # for k, baby in enumerate(children_spheres):
+    #     initial_baby = baby["center"]
+    #     children_baby = get_all_children_of(G, baby)
+    #     shift_whole_family(G=G,
+    #                        root=baby,
+    #                        initial_center=initial_baby,
+    #                        current_center=children_spheres[k]["center"],
+    #                        children=children_baby)
+    #---------------------------
     #     if len(children_baby) > 0:
     #         print("shifting babies of kids")
     #         shift_whole_family(G=G,
@@ -252,7 +270,7 @@ def shift_whole_family(G, root, initial_center, current_center, children):
     #         tmp_vec = np.array(children_spheres[k]["center"] - initial_baby)
     #         adjust2map(G, mother_sphere=root, children=[baby], vector=tmp_vec)
 
-    return DATAFRAME
+    # return DATAFRAME
 
 #%%
 
