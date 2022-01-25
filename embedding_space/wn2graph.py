@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 
 
 # Experimenting on 1 synset only
-wurzel = "freshwater_fish.n.01"
+wurzel = "entity.n.01"
+# wurzel = "freshwater_fish.n.01"
 # wurzel = 'seafood.n.01'
 # wurzel = "food.n.02"
 # initialize graph G
@@ -51,4 +52,4 @@ WN = extract_hyponyms(wurzel)
 #%%
 # store graph
 # store the graph in pickle
-nx.write_gpickle(G=WN, path='./small_example_wordnet.gpickle')
+nx.write_gpickle(G=WN, path='./240122_freshwater_wordnet.gpickle')
