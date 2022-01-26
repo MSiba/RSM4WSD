@@ -81,7 +81,6 @@ def map2index(q):
 
     keyfunc = lambda d: next(iter(d.values()))
 
-    sorted(idxlist, key=keyfunc)
 
     result = {k: [x for d in g for x in d]
             for k, g in itertools.groupby(sorted(idxlist, key=keyfunc), key=keyfunc)}

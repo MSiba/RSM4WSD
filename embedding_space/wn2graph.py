@@ -33,6 +33,12 @@ wn.all_synsets(pos='n')
 
 to get all the missing synsets, use the relation instance_hyponomy()
 No need for meronomy because it will yield 2 different parents in our case  
+
+indicates the meronymy relations between words.
+a meronym denoting a part and a holonym denoting a whole.
+difference to hyper/hypo: is-a relation indicates the type/kind.
+example: hyper/hypo: pine_tree is kind of tree
+meronomy: leaves(mer) are part_of tree(holonym)
 """
 
 
@@ -103,7 +109,7 @@ def extract_hyponyms(root_synset):
 
     return G
 #%%
-WN = extract_hyponyms(wurzel)
+# WN = extract_hyponyms(wurzel)
 #%%
 # store graph
 # store the graph in pickle
@@ -111,53 +117,63 @@ WN = extract_hyponyms(wurzel)
 
 #%%
 # G = nx.read_gpickle(path="./wordnet.gpickle")
-# #%%
-# # VERBS
-# # 13.767 verb
-# verbs = [verb for verb in wn.all_synsets(pos='v')]
-# #%%
-# # verbs don't have one common hypernym
-# # there are verbs having over 1000 hyponym, others only 1, namely, themselves
-# # to embed them, I will need the mppt algorithm to run over each tree out of 559 trees
-# #
-# root_hypernyms_verbs = Counter(chain(*[ss.root_hypernyms() for ss in wn.all_synsets(pos='v')]))
-# verb_roots = [k.name() for k in root_hypernyms_verbs.keys()]
-# # verb_graphs = [extract_hyponyms(s) for s in verb_roots]
+#%%
+# VERBS
+# 13.767 verb
+verbs = [verb.name() for verb in wn.all_synsets(pos='v')]
+#%%
+# verbs don't have one common hypernym
+# there are verbs having over 1000 hyponym, others only 1, namely, themselves
+# to embed them, I will need the mppt algorithm to run over each tree out of 559 trees
 #
-# def extract_meronyms(root_synset):
-#     """
-#     indicates the meronymy relations between words.
-#     a meronym denoting a part and a holonym denoting a whole.
-#     difference to hyper/hypo: is-a relation indicates the type/kind.
-#     example: hyper/hypo: pine_tree is kind of tree
-#     meronomy: leaves(mer) are part_of tree(holonym)
-#     :param root_synset:
-#     :return:
-#     """
-#     vertices = [root_synset]
-#     edges = []
-#
-#     # for word in wn.synset(root_synset).hyponyms():
-#     #     vertices.append(word.name())
-#
-#     # new_vertices = []
-#
-#     for node in vertices:
-#         synset = wn.synset(node)
-#
-#         try:
-#             for hyponym in synset.hyponyms():
-#                 # add this hyponym to the nodes of wordnet
-#                 vertices.append(hyponym.name())
-#                 # relate hyponym with edge
-#                 edges.append(tuple((node, hyponym.name())))
-#             # extract_hyponyms(node)
-#         except AttributeError:
-#             continue
-#
-#     nodes = vertices #+ new_vertices
-#     G = nx.DiGraph()
-#     G.add_nodes_from(nodes)
-#     G.add_edges_from(edges)
-#
-#     return G
+root_hypernyms_verbs = Counter(chain(*[ss.root_hypernyms() for ss in wn.all_synsets(pos='v')]))
+verb_roots = [k.name() for k in root_hypernyms_verbs.keys()]
+# add a 'root' string as root for all verbs?
+# it is equivalent to the "entity.n.01"
+# 'root'
+virtual_root = 'verb_root'
+# connect virtual root to all verb root hypernyms
+virtual_root_relations = [tuple((virtual_root, hyper_v_root)) for hyper_v_root in verb_roots]
+#%%
+V = nx.DiGraph()
+V_nodes = [virtual_root]
+#%%
+verb_graphs = [extract_hyponyms(s) for s in verb_roots]
+#%%
+for H in verb_graphs:
+    V_nodes += list(H.nodes())
+    if len(H.edges()) != 0:
+        virtual_root_relations += list(H.edges())
+
+#%%
+# there are 58 verbs missing here
+# reason is that certain verbs X do not show hyponomy to another verb Y, however, Y has X as hypernomy
+missing_verbs = list(set(verbs) - set(V_nodes))
+
+#%%
+for miss_verb in missing_verbs:
+    V_nodes.append(miss_verb)
+    virtual_root_relations.append(tuple((wn.synset(miss_verb).hypernyms()[0].name(), miss_verb)))
+
+
+#%%
+V.add_nodes_from(V_nodes)
+V.add_edges_from(virtual_root_relations)
+
+#%%
+# WN_Verb = nx.write_gpickle(G=V, path="./wordnet_verbs.gpickle")
+
+#%%
+# Adjectives, incl. adjective sattelites (.s.number)
+#18.156
+adjectives = [adj.name() for adj in wn.all_synsets(pos='a')]
+#%%
+#create Adjective graph
+A = nx.DiGraph()
+adj_nodes = ['adjective_root'] + adjectives
+adj_edges = [tuple(('adjective_root', adj)) for adj in adj_nodes]
+A.add_nodes_from(adj_nodes)
+A.add_edges_from(adj_edges)
+
+#%%
+# Adverbs
