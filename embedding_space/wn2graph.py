@@ -174,6 +174,17 @@ adj_nodes = ['adjective_root'] + adjectives
 adj_edges = [tuple(('adjective_root', adj)) for adj in adj_nodes]
 A.add_nodes_from(adj_nodes)
 A.add_edges_from(adj_edges)
+#%%
+# WN_adjective = nx.write_gpickle(G=A, path='./wordnet_adjectives.gpickle')
 
 #%%
 # Adverbs
+adverbs = [adv.name() for adv in wn.all_synsets(pos='r')]
+#%%
+R = nx.DiGraph()
+adv_nodes = ['adverb_root'] + adverbs
+adv_edges = [tuple(('adverb_root', adv)) for adv in adv_nodes]
+R.add_nodes_from(adv_nodes)
+R.add_edges_from(adv_edges)
+#%%
+# WN_adverbs = nx.write_gpickle(G=R, path='./wordnet_adverbs.gpickle')
