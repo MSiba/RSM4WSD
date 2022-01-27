@@ -10,6 +10,9 @@ https://stackoverflow.com/questions/36060492/nltk-wordnet-verb-hierarchy
 
 Statistics on WordNet 3.0: http://manpages.ubuntu.com/manpages/trusty/man7/wnstats.7WN.html
 https://stackoverflow.com/questions/28876407/how-to-find-the-lexical-category-of-a-word-in-wordnet-using-nltkpython/28908041
+
+To deal with compounds: https://stackoverflow.com/questions/49403913/handling-compound-words-2-grams-using-nltk
+
 """
 # Experimenting on 1 synset only
 wurzel = "entity.n.01"
@@ -136,7 +139,7 @@ virtual_root = 'verb_root'
 virtual_root_relations = [tuple((virtual_root, hyper_v_root)) for hyper_v_root in verb_roots]
 #%%
 V = nx.DiGraph()
-V_nodes = [virtual_root]
+V_nodes = []
 #%%
 verb_graphs = [extract_hyponyms(s) for s in verb_roots]
 #%%
@@ -144,7 +147,6 @@ for H in verb_graphs:
     V_nodes += list(H.nodes())
     if len(H.edges()) != 0:
         virtual_root_relations += list(H.edges())
-
 #%%
 # there are 58 verbs missing here
 # reason is that certain verbs X do not show hyponomy to another verb Y, however, Y has X as hypernomy
@@ -157,7 +159,7 @@ for miss_verb in missing_verbs:
 
 
 #%%
-V.add_nodes_from(V_nodes)
+V.add_nodes_from([virtual_root] + V_nodes)
 V.add_edges_from(virtual_root_relations)
 
 #%%
@@ -170,9 +172,9 @@ adjectives = [adj.name() for adj in wn.all_synsets(pos='a')]
 #%%
 #create Adjective graph
 A = nx.DiGraph()
-adj_nodes = ['adjective_root'] + adjectives
+adj_nodes = adjectives
 adj_edges = [tuple(('adjective_root', adj)) for adj in adj_nodes]
-A.add_nodes_from(adj_nodes)
+A.add_nodes_from(['adjective_root'] + adj_nodes)
 A.add_edges_from(adj_edges)
 #%%
 # WN_adjective = nx.write_gpickle(G=A, path='./wordnet_adjectives.gpickle')
@@ -182,9 +184,10 @@ A.add_edges_from(adj_edges)
 adverbs = [adv.name() for adv in wn.all_synsets(pos='r')]
 #%%
 R = nx.DiGraph()
-adv_nodes = ['adverb_root'] + adverbs
+adv_nodes = adverbs
 adv_edges = [tuple(('adverb_root', adv)) for adv in adv_nodes]
-R.add_nodes_from(adv_nodes)
+
+R.add_nodes_from(['adverb_root'] + adv_nodes)
 R.add_edges_from(adv_edges)
 #%%
 # WN_adverbs = nx.write_gpickle(G=R, path='./wordnet_adverbs.gpickle')
