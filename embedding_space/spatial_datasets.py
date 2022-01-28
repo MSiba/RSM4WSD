@@ -25,14 +25,17 @@ https://www.quora.com/What-is-barycenter-and-how-is-it-different-from-centroid
 def generate_center(df, center_info, fct="center"):
     direction_vec = np.zeros((1, 1))
     for center in center_info:
+
         N = len(center['senses'])
         x = np.zeros(N)
         y = np.zeros(N)
         r = np.zeros(N)
+
         for i, sense in enumerate(center['senses']):
             x[i] = df.loc[df['synset']==sense]['x']
             y[i] = df.loc[df['synset'] == sense]['y']
             r[i] = df.loc[df['synset'] == sense]['radius'] / 2
+            df.loc[df['synset'] == sense]["word"] = center["word"]
 
         if fct=="center":
             x_bar = (1/N) * np.sum(x)
@@ -43,13 +46,14 @@ def generate_center(df, center_info, fct="center"):
         # TODO: include other functions that can be used for comparision
         # if fct == "centroid":
         # if fct == "center of mass"
-        L0 = np.random.randint(low=1000, high=150000) - np.sum(r)
+
+        L0 = np.random.randint(low=1000, high=150000)
         WORD_POINT = direction_vec * L0 / np.linalg.norm(direction_vec)
         ALPHA = find_angle(np.array(1,0), direction_vec)
 
-        center_info['point'] = WORD_POINT
-        center_info['l0'] = L0
-        center_info['alpha'] = ALPHA
+        center['word_point'] = WORD_POINT
+        center['l0'] = L0
+        center['alpha'] = ALPHA
 
     return center_info
 
