@@ -7,6 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/datasets/PWNGC" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/embedding_space" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/geometry_learning" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/datasets/SemCor" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/data" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.7 (Ball4WSD)" jdkType="Python SDK" />

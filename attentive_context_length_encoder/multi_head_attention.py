@@ -9,8 +9,9 @@ import seaborn
 seaborn.set_context(context="talk")
 
 """
-The Input I will get from the embedding space is as follows: [l0, alpha, l_i, beta_i, radius_i]
-this input is saved in a file of the form: {"word": the word,
+The output I will get from the embedding space is as follows: [l0, alpha, l_i, beta_i, radius_i]
+this input is saved in a file of the form: [list of words], [list of tags]
+                                   Not as:  {"word": the word,
                                             "synset": WN synset,
                                             "POS":,
                                             "offset":,
