@@ -81,10 +81,10 @@ def map2index(q):
     :param q:
     :return:
     """
+
     idxlist = [{idx: el} for idx, el in enumerate(q)]
 
     keyfunc = lambda d: next(iter(d.values()))
-
 
     result = {k: [x for d in g for x in d]
             for k, g in itertools.groupby(sorted(idxlist, key=keyfunc), key=keyfunc)}
@@ -97,7 +97,7 @@ def map2index(q):
         start.append(l[0])
         end.append(l[1])
 
-    radius = [np.abs(i - j) for i,j in zip(start, end)]
+    radius = [np.abs(i - j) for i, j in zip(start, end)]
 
     cx = [(i+j)/2 for i, j in zip(start, end)]
 
