@@ -29,12 +29,12 @@ Used in script: embedding_space/merge_datasets.py
 # 4. Merged all datasets into One Big Dataset of 117.000+ WordNet Synsets
 *spatial_wordnet_df*: dataframe of nouns, verbs, adjectives, and adverbs.
 Created in script: embedding_space/merge_datasets.py
-Used in script: embedding_space/spatial_datasets.py
+Used in script: embedding_space/{spatial_datasets.py; word2sense_mapping.py}
 
 # 5. Create a Dataframe for WordNet words, and their relations to their synsets
 *word_mapping_df.pickle*: dataframe mapping each wn.word into its [senses], word coordinates wrt. senses, and alpha.
 *exploded_word_mapping.pickle*: dataframe which explodes the previous one to represent each sense in a single column.
 *exploded_word_mapping_POS.pickle*: dataframe with POS added
 Created in script: embedding_space/spatial_datasets.py
-Used in script:
+Used in script: embedding_space/word2sense_mapping.py
 

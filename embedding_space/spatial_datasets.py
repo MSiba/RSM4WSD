@@ -36,7 +36,6 @@ def generate_center(df, center_info, fct="center"):
             x[i] = df.loc[df['synset']==sense]['x']
             y[i] = df.loc[df['synset'] == sense]['y']
             r[i] = df.loc[df['synset'] == sense]['radius'] / 2
-            # df.loc[df['synset'] == sense]["word"] = center["word"]
 
         if fct == "center":
             x_bar = (1/N) * np.sum(x)
