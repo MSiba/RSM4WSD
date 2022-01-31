@@ -4,7 +4,7 @@ import pickle
 import utils
 
 
-"""Modified by: Siba Mohsen"""
+"""__author__ = Siba Mohsen"""
 
 
 output_info = '../data/output/pwngc.txt'

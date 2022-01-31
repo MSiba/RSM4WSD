@@ -38,3 +38,7 @@ Used in script: embedding_space/{spatial_datasets.py; word2sense_mapping.py}
 Created in script: embedding_space/spatial_datasets.py
 Used in script: embedding_space/word2sense_mapping.py
 
+# 6. Create the dataframe of all words-synsets relations (including the virtual roots as 0s)
+*SPATIAL_WORDNET.pickle*
+Created in script: word2sense_mapping.py
+

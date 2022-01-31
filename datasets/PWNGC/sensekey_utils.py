@@ -25,7 +25,6 @@ Source: https://github.com/cltl/pwgc
 from nltk.corpus import wordnet as wn
 
 
-
 def get_lemma_pos_of_sensekey(sense_key):
     """
     lemma and pos are determined for a wordnet sense key
