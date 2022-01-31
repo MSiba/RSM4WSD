@@ -14,8 +14,13 @@ def RELATION(word1, word2):
 def find_angle(vec1, vec2):
     unit_1 = vec1/np.linalg.norm(vec1)
     unit_2 = vec2/np.linalg.norm(vec2)
-    angle = np.arccos(np.dot(unit_1, unit_2))
-    return angle * 180.0 / np.pi # in degrees
+    # Warning: np.dot is imprecise, better use it with round!
+    dot_prod = np.round(np.dot(unit_1, unit_2), 1)
+    try:
+        angle = np.arccos(dot_prod)
+        return angle * 180.0 / np.pi  # in degrees
+    except RuntimeError as e:
+        print(e)
 
 def translate(sphere, vec): #acts as prolongement
     sphere["center"] = sphere["center"] + vec
