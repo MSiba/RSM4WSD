@@ -1,4 +1,5 @@
 import ast
+import itertools
 import pandas as pd
 import numpy as np
 from nltk.corpus import wordnet as wn
@@ -24,6 +25,10 @@ count = 0
 needed = 0
 
 def spatial_tag(df, word, synset):
+
+    if synset == "no-synset":
+        return "O"
+
     params = ["l0", "alpha", "l_i", "beta_i", "radius"]
     tag = None
     syn_df = df.loc[df["synset"] == synset]
@@ -66,11 +71,15 @@ def clean_offset(pwngc_of):
     :param pwngc_of: token annotation
     :return: offset-pos
     """
+    if pwngc_of == "no-annotation":
+        return pwngc_of
 
     return re.sub('eng-30-', '', pwngc_of)
 
 def synset_name(offset):
-    return wn.of2ss(offset).lemmas()
+    if offset == "no-annotation":
+        return "no-synset"
+    return wn.of2ss(offset).name() #.lemmas()
 
 """
 Script to create a dataset of PWNGC to train on Word Sense Disambiguation
@@ -102,9 +111,9 @@ wn.synset_from_pos_and_offset('n', 4543158)
 wn.of2ss("02676054-v").lemmas()
 """
 
-with open(output_info, 'w') as infofile:
+with open(output_info, 'w', newline='') as infofile:
 
-    writer = csv.writer(infofile)
+    writer = csv.writer(infofile, delimiter="\t")
 
     for instance_id, instance in instances.items():
         print("instance id = ", instance_id)
@@ -120,46 +129,115 @@ with open(output_info, 'w') as infofile:
 
 
         for token in instance.tokens:
-            print("token = ", token)
+            print("token = ", token.text)
+            # print("lemma, type = ", token.lemma, type(token.lemma))
+
+            try:
+                print("pos, type = ", token.pos, type(token.pos))
+            except AttributeError as ae:
+                print(ae, "at token = ", token.text)
+
+            # print("synsets, type = ", token.synsets, type(token.synsets))
 
             # try:
             sentence_tokens.append(token.text)
-            sentence_lemmas.append(token.lemma)
+
+            # lemma is of type str
+            if token.lemma != '':
+                sentence_lemmas.append(token.lemma)
+            else:
+                sentence_lemmas.append("no-lemma")
+
             try:
-                sentence_pos.append(token.pos)
-                print("POS = ", token.pos)
-            except:
-                sentence_pos.append('no_pos')
-                print("No POS = NOTHING")
-            annotations.append(list(token.synsets))
+                # pos is of type string
+                if token.pos is not None:
+                    sentence_pos.append(token.pos)
+                    print("POS = ", token.pos)
+                else:
+                    sentence_pos.append('no-pos')
+                    print("No POS = NOTHING")
+            except AttributeError as ae:
+                sentence_pos.append('no-pos')
+                print(ae, "at token = ", token.text)
+
+            # synsets are of type set
+            if len(token.synsets) != 0:
+                annotations.append(list(token.synsets))
+            else:
+                annotations.append(list({"no-annotation"}))
+
             # except AttributeError as e:
             #     print(e, "at token = ", token)
 
             needed += len(token.synsets)
 
-        for (target_lemma,
-             target_pos,
-             token_annotation,
-             sentence_tokens,
-             training_example,
-             target_index) in utils.generate_training_instances_v2(sentence_tokens,
-                                                                   sentence_lemmas,
-                                                                   sentence_pos,
-                                                                   annotations):
+        print("sentence tokens = ", sentence_tokens)
+        print("sentence tokens = ", annotations)
+        print("sentence tokens = ", sentence_pos)
+        print("sentence tokens = ", sentence_lemmas)
 
-            tokenized_sentence = sentence_tokens
+        altern_annotations = list(itertools.product(*annotations))
+        # since some tokens have many senses:
+        for j in range(len(altern_annotations)):
+            for i in range(len(sentence_tokens)):
+                clean_off = clean_offset(altern_annotations[j][i])
+                syn_name = synset_name(clean_off)
+                print("synset name", syn_name)
+                tag = spatial_tag(tags_df, word=sentence_lemmas[i], synset=syn_name)
 
-            clean_off = clean_offset(token_annotation)
-            syn_name = synset_name(clean_off)
-            # TODO: add try except!
-            row = [sentence_tokens[target_index],
-                   target_lemma,
-                   target_pos,
-                   clean_off,
-                   syn_name,
-                   spatial_tag(tags_df, word=target_lemma, synset=syn_name)]
+                row = [sentence_tokens[i],
+                       sentence_lemmas[i],
+                       sentence_pos[i],
+                       clean_off,
+                       syn_name,
+                       tag]
 
-            writer.writerow(row)
+                writer.writerow(row)
+
+            writer.writerow('')
+
+        count += 1
+
+        # for (target_lemma,
+        #      target_pos,
+        #      token_annotation,
+        #      sentence_tokens,
+        #      training_example,
+        #      target_index) in utils.generate_training_instances_v2(sentence_tokens,
+        #                                                            sentence_lemmas,
+        #                                                            sentence_pos,
+        #                                                            annotations):
+        #
+        #   # tokenized_sentence = sentence_tokens
+            # ------new for spatial params
+            # if len(target_lemma) == 0:
+            #     target_lemma = "unknown-lemma"
+            #
+            # if target_pos == '':
+            #     target_pos = "no-pos"
+
+            # if len(token_annotation) == 0:
+            #     token_annotation = "no-annotation"
+            #     clean_off = clean_offset(token_annotation)
+            #     syn_name = "no-synset-name"
+            #     tag = "O"
+            # else:
+            #     clean_off = clean_offset(token_annotation)
+            #     syn_name = synset_name(clean_off)
+            #     print("synset name", syn_name)
+            #     tag = spatial_tag(tags_df, word=target_lemma, synset=syn_name)
+            #
+            # row = [sentence_tokens[target_index],
+            #        target_lemma,
+            #        target_pos,
+            #        clean_off,
+            #        syn_name,
+            #        tag]
+            #
+            # writer.writerow(row)
+            # ------end new for spatial params
+
+            # --begin old stuff
             # labels.append((sentence_tokens[target_index], target_lemma, target_pos, clean_offset(token_annotation)))
 
             # print('<START>', target_lemma, '\t', target_pos, '\t', token_annotation, '\t', sentence_tokens, '\t',target_index, '<END>')
@@ -169,12 +247,12 @@ with open(output_info, 'w') as infofile:
 
             # count += 1
 
-        print(tokenized_sentence, '\t', labels, '\n')
+        # print(tokenized_sentence, '\t', labels, '\n')
 
         # infofile.write(str(tokenized_sentence) + '\t' + str(labels) + '\n')
-        writer.writerow('')
-
-        count += 1
+        # writer.writerow('')
+        #
+        # count += 1
 
 
 assert needed == count
