@@ -9,16 +9,17 @@ This repository provides the code to run Word Sense Disambiguation using Rotatin
 - **encoder**: the encoder has been trained and tested on Google Colab. To run the code, please refer to section 'Encoder' of this ReadMe file
 
 ## How to run the code?
-1. download the requirements.txt file
-2. If you want to start from the beginning (embedding WordNet into the embedding space), do the following:
-  i. transform WordNet into graph, run <wn2graph.py> to parse each POS group.
-  ii. 
-4. If you want to use previously created data, you can download the processed 'data' file from https://drive.google.com/drive/folders/1mPJ127-CfexqijTGRNQj1RR4Z7Fp7pTE?usp=sharing
+- download the requirements.txt file
+- If you want to use previously created data, you can download the processed 'data' file from https://drive.google.com/drive/folders/1mPJ127-CfexqijTGRNQj1RR4Z7Fp7pTE?usp=sharing
+- If you want to start from the beginning (embedding WordNet into the embedding space), do the following:
+1. transform WordNet into graph, run <wn2graph.py> to parse each POS group.
+2. run <mptt.py> on each graph
+3. run <POS>_dataset.py, and generate a seperate dataframe for each POS group
+4. merge all files together to produce 'Spatial WordNet'
+5. run the experiments as described in the 'Encoder' below
 
-
-
-# Encoder: Training, validation, testing
-## Location: Google ColabPro, and Google ColabProPlus
+## Encoder: Training, validation, testing
+### Location: Google ColabPro, and Google ColabProPlus
 To reproduce the training procedure:
 1. download the 'ColabNotebooks' file to your Google Drive 
 2. Link: https://drive.google.com/drive/folders/1YpEY4RsNJEdwYSGfNM7Gib8A9RWqHF-t?usp=sharing
