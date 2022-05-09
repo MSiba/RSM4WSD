@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import numpy as np
 from helper_functions import find_angle
 
 src = "../data/wordnet_dataframes/"

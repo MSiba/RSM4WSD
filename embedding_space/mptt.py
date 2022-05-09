@@ -13,6 +13,7 @@ import itertools
 """
 Initial code from: https://stackoverflow.com/questions/36238796/stack-based-modified-preorder-tree-traversal
 """
+
 wurzel = 'food.n.02'
 # # wurzel = 'seafood.n.01'
 #

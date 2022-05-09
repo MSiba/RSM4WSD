@@ -11,6 +11,8 @@ import utils
 
 
 """__author__ = Siba Mohsen"""
+# NOTE: tested also in the colab pwngc_preprocess2train.ipynb
+# https://colab.research.google.com/drive/1t5D6WRxs_l6kUkzG2WgkAPjoOdyjeqn3#scrollTo=gXYpq-Zf6hFw
 
 # output_info = '../data/output/pwngc.txt'
 
@@ -25,6 +27,17 @@ count = 0
 needed = 0
 
 def spatial_tag(df, word, synset):
+    """
+    automatically matches the word to the suitable spatial tags in the dataframe.
+    NOTE: - some words of the PWNGC do not match 100% their wordnet words, e.g. because of a ' or 's, therefore,
+            I need to lower the words, and check for some of them if they match word or the lemma
+          - some lemmas are splitted into 2 words, which causes a malfunction when trying to detect
+            the right word from the dataframe (there are 102 such sentence)
+    :param df: dataframe containing all the words, synsets, and spatial tags
+    :param word: word or lemma (word.lower())
+    :param synset: WordNet Synset
+    :return: spatial tag of the word and synset
+    """
 
     if synset == "no-synset":
         return "O"
@@ -56,7 +69,7 @@ def spatial_tag(df, word, synset):
         print("Unable to choose the right spatial tag from SPATIAL_WORDNET.pickle")
 
     return tag
-
+#%%
 def clean_offset(pwngc_of):
     """
     Extracts the offset and POS from the token annotation.

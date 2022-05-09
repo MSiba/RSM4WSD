@@ -2,6 +2,9 @@ import pandas as pd
 
 df = pd.read_pickle("../data/wordnet_dataframes/SPATIAL_WORDNET.pickle")
 
+"__author == Siba Mohsen"
+
+
 def prune(df):
     """
     The current SPATIAL_WORDNET.pickle dataset contains for the same synset, several words, and for each word, several parameters.

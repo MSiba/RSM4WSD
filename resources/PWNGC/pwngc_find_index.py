@@ -1,7 +1,6 @@
 import pickle
 from pprint import pprint as pp
 
-# TODO: search by offset, lemma key
 # https://stackoverflow.com/questions/37641584/how-to-get-sense-key-in-wordnet-for-nltk-python
 
 instances = pickle.load(open('../../data/ulm/instances.bin', 'rb'))

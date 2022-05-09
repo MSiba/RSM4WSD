@@ -30,17 +30,13 @@ semcor_spacial_tags = None
 semcor_df = pd.DataFrame(data={'sentence': semcor_sentences, 'sense_tags': semcor_tags})
 
 #%%
-# TODO: after I know, how is the attention mechanism working exactly, I need to adjust the Semcor dataset in a way that it fits to the attention input.
-#TODO: decide what to include in the dataset exactly, Pay attention if the position of word in the sentence plays a role.
-# TODO: we can have the same word in a sentence with 2 different meanings.
-
 # wn.lemma('dog.n.01.dog').synset()
 # >> Synset('dog.n.01')
 # To store the Lemma name only,
 # [str(lemma.name()) for lemma in wn.synset('dog.n.01').lemmas()]
 # >> ['dog', 'domestic_dog', 'Canis_familiaris']
 
-sent = semcor_tags[0]
+sent = semcor_tags[1]
 print(sent)
 words = []
 POS = []

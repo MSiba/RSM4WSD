@@ -14,7 +14,7 @@ The current status of this script:
 5. The children spheres sometimes do not move due to their static programming 
     --> they do not have enough space to move according to our objective functions in z3 checker
 TODO: 
-i. look for alternatives to z3 and the recursion
+i. look for alternatives to z3 and the recursion 
 ii. maybe applying the geometric functions as I wanted initially
 iii. after I created the mother sphere for a big tree, I must move it sufficiently in space!!
 iv. find an efficient solution for running such an algorithm on all the nodes of the graph

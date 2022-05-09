@@ -8,7 +8,26 @@
       <sourceFolder url="file://$MODULE_DIR$/embedding_space" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/geometry_learning" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/resources/SemCor" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources/EvaluationDatasets" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources/EvaluationDatasets/ewiser" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources/EvaluationDatasets/ewiser/fairseq_ext" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources/EvaluationDatasets/ewiser/fairseq_ext/data" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources/EvaluationDatasets/ewiser/fairseq_ext/criterions" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources/EvaluationDatasets/ewiser/fairseq_ext/models" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources/EvaluationDatasets/ewiser/fairseq_ext/modules" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources/EvaluationDatasets/ewiser/fairseq_ext/tasks" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources/EvaluationDatasets/ewiser/spacy" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources/EvaluationDatasets/res" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ewiser" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ewiser/ewiser" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ewiser/bin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ewiser/res" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Regressor" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/statistics" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/statistics/input" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/data" />
+      <excludeFolder url="file://$MODULE_DIR$/resources/EvaluationDatasets/eval_datasets" />
+      <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.7 (Ball4WSD)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
