@@ -71,7 +71,7 @@ jupyter==1.0.0
 jupyter-client @ file:///opt/conda/conda-bld/jupyter_client_1643638337975/work
 jupyter-console==6.4.0
 jupyter-core @ file:///C:/ci/jupyter_core_1646976467633/work
-jupyter-server==1.11.2
+jupyter-server==1.15.4
 jupyter-server-proxy==3.1.0
 jupyterlab-pygments @ file:///tmp/build/80754af9/jupyterlab_pygments_1601490720602/work
 jupyterlab-widgets==1.0.2
